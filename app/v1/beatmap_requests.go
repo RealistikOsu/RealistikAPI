@@ -109,7 +109,7 @@ func BeatmapRankRequestsSubmitPOST(md common.MethodData) common.CodeMessager {
 
 	var ranked int
 	err = md.DB.QueryRow("SELECT ranked FROM beatmaps "+w.Clause+" LIMIT 1", w.Params...).Scan(&ranked)
-	if ranked >= 2 {
+	if ranked == 2 {
 		return common.SimpleResponse(406, "That beatmap is already ranked.")
 	}
 
