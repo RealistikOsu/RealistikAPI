@@ -42,8 +42,8 @@ func UserFirstGET(md common.MethodData) common.CodeMessager {
 	)
 
 	// Fetch all score from users
-  md.DB.Get(&r.Total, "SELECT COUNT(scoreid) FROM first_places WHERE userid = ? AND mode = ? AND relax = ?", id, mode, relax)
-	rows, err = md.DB.Query(query + common.Paginate(md.Query("p"), md.Query("l"), 50), id, mode, relax)
+  md.DB.Get(&r.Total, "SELECT COUNT(scoreid) FROM first_places WHERE userid = ? AND mode = ? AND relax = ?", id, mode, rx)
+	rows, err = md.DB.Query(query + common.Paginate(md.Query("p"), md.Query("l"), 50), id, mode)
 	if err != nil {
 		md.Err(err)
 		return Err500
