@@ -12,7 +12,7 @@ import (
 // Score is a score done.
 type tuser struct {
 	common.ResponseBase
-  Total     string      `json:total`
+  Total     string      `json:"total"`
 	Scores		[]userScore `json:"scores"`
 }
 
