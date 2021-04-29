@@ -66,7 +66,7 @@ const lbUserQuery = `
 		FROM users
 		INNER JOIN users_stats ON users_stats.id = users.id `
 
-func getScoreLb(m, rx, p, l int, country, sorted string, md *common.MethodData) []leaderboardUser {
+func getScoreLb(m string, rx int, p int, l int, country string, sorted string, md *common.MethodData) []leaderboardUser {
 	var query, order, whereClause string
 
 	if country != "" {
@@ -126,7 +126,7 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 	}
 	l := common.InString(1, md.Query("l"), 500, 50)
 	sorted := md.Query("sort")
-	rx := md.Query("rx")
+	rx := common.Int(md.Query("rx"))
 	country := md.Query("country")
 
 	key := "ripple:leaderboard:" + m
