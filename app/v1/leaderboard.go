@@ -126,6 +126,8 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 	}
 	l := common.InString(1, md.Query("l"), 500, 50)
 	sorted := md.Query("sort")
+	rx := md.Query("rx")
+	country := md.Query("country")
 
 	key := "ripple:leaderboard:" + m
 	if common.Int(md.Query("rx")) == 1 {
@@ -134,16 +136,15 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 	if common.Int(md.Query("rx")) == 2 {
 		key = "ripple:leaderboard_ap:" + m
 	}
-	if md.Query("country") != "" {
-		key += ":" + md.Query("country")
-		country := md.Query("country")
+	if country != "" {
+		key += ":" + country
 	}
 	if sorted == "" {
 		sorted = "pp"
 	}
 
 	if sorted == "score" {
-		response = leaderboardResponse{Users: getScoreLb(m, rx, p, l, country, sorted, &md)}
+		response := leaderboardResponse{Users: getScoreLb(m, rx, p, l, country, sorted, &md)}
 		response.Code = 200
 		return response
 	}
