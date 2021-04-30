@@ -73,22 +73,19 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 	case 1:
 		order = " ORDER BY rx_stats.ranked_score_%[1]s DESC, rx_stats.pp_%[1]s DESC"
 		if country != "" {
-			country = strings.ToUpper(country)
-			whereClause = fmt.Sprintf(" AND rx_stats.country = '%s'", country)
+			whereClause = fmt.Sprintf(" AND users_stats.country = '%s'", strings.ToUpper(country))
 		}
 		query = fmt.Sprintf(rxUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	case 2:
 		order = " ORDER BY ap_stats.ranked_score_%[1]s DESC, ap_stats.pp_%[1]s DESC"
 		if country != "" {
-			country = strings.ToUpper(country)
-			whereClause = fmt.Sprintf(" AND ap_stats.country = '%s'", country)
+			whereClause = fmt.Sprintf(" AND users_stats.country = '%s'", strings.ToUpper(country))
 		}
 		query = fmt.Sprintf(apUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	default:
 		order = " ORDER BY users_stats.ranked_score_%[1]s DESC, users_stats.pp_%[1]s DESC"
 		if country != "" {
-			country = strings.ToUpper(country)
-			whereClause = fmt.Sprintf(" AND users_stats.country = '%s'", country)
+			whereClause = fmt.Sprintf(" AND users_stats.country = '%s'", strings.ToUpper(country))
 		}
 		query = fmt.Sprintf(lbUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	}
