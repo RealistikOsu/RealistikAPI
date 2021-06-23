@@ -91,7 +91,7 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 			Table:   "scores_relax",
 			Allowed: []string{"pp", "score", "accuracy", "id"},
 		})
-		if where.Clause == "" {
+		if where.Clause == "" && md.Query("id") == "" {
 			return ErrMissingField("must specify at least one queried item")
 		}
 
@@ -106,7 +106,7 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 			Table:   "scores_ap",
 			Allowed: []string{"pp", "score", "accuracy", "id"},
 		})
-		if where.Clause == "" {
+		if where.Clause == "" && md.Query("id") == "" {
 			return ErrMissingField("must specify at least one queried item")
 		}
 
