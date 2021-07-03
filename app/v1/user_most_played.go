@@ -11,6 +11,7 @@ type mostPlayedBeatmap struct {
 
 type mostPlayedBeatmapResponse struct {
 	common.ResponseBase
+	Total string `json:"total"`
 	Beatmaps []mostPlayedBeatmap `json:"beatmaps"`
 }
 
@@ -36,6 +37,7 @@ WHERE ` + whereClause + ` ORDER BY users_beatmap_playcount.playcount DESC ` +
 		return Err500
 	}
 	var r mostPlayedBeatmapResponse
+	md.DB.Get(&r.Total, "SELECT COUNT(id) FROM users_beatmap_playcount WHERE user_id = ? AND game_mode = ?", md.Query("id"), md.Query("mode"))
 	for rows.Next() {
 		var mpb mostPlayedBeatmap
 		err = rows.Scan(
