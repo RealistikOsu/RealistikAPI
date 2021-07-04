@@ -95,8 +95,6 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/users", v1.UsersGET)
 		r.Method("/api/v1/users/whatid", v1.UserWhatsTheIDGET)
 		r.Method("/api/v1/users/full", v1.UserFullGET)
-		// r.Method("/api/v1/users/rxfull", v1.RelaxUserFullGET)
-		// r.Method("/api/v1/users/apfull", v1.AutoUserFullGET)
 		r.Method("/api/v1/users/achievements", v1.UserAchievementsGET)
 		r.Method("/api/v1/users/most_played", v1.UserMostPlayedGET)
 		r.Method("/api/v1/users/userpage", v1.UserUserpageGET)
