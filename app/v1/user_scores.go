@@ -91,6 +91,7 @@ func UserScoresBestGET(md common.MethodData) common.CodeMessager {
 		return relaxPuts(md, fmt.Sprintf(
 			`WHERE
 				scores_relax.completed = '3'
+				AND beatmaps.ranked IN (2,3)
 				AND %s
 				%s
 				AND `+md.User.OnlyUserPublic(true)+`
@@ -103,6 +104,7 @@ func UserScoresBestGET(md common.MethodData) common.CodeMessager {
 		return autoPuts(md, fmt.Sprintf(
 			`WHERE
 				scores_ap.completed = '3'
+				AND beatmaps.ranked IN (2,3)
 				AND %s
 				%s
 				AND `+md.User.OnlyUserPublic(true)+`
@@ -113,6 +115,7 @@ func UserScoresBestGET(md common.MethodData) common.CodeMessager {
 		return scoresPuts(md, fmt.Sprintf(
 			`WHERE
 				scores.completed = '3'
+				AND beatmaps.ranked IN (2,3)
 				AND %s
 				%s
 				AND `+md.User.OnlyUserPublic(true)+`
