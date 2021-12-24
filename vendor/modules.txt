@@ -1,0 +1,89 @@
+# github.com/DataDog/datadog-go v0.0.0-20161213181837-6ea09a754064
+## explicit
+github.com/DataDog/datadog-go/statsd
+# github.com/buaazp/fasthttprouter v0.1.1
+## explicit
+github.com/buaazp/fasthttprouter
+# github.com/certifi/gocertifi v0.0.0-20160926115448-a61bf5eafa3a
+## explicit
+github.com/certifi/gocertifi
+# github.com/getsentry/raven-go v0.0.0-20161115135411-3f7439d3e74d
+## explicit
+github.com/getsentry/raven-go
+# github.com/go-sql-driver/mysql v1.3.1-0.20161224121019-2e00b5cd7039
+## explicit
+github.com/go-sql-driver/mysql
+# github.com/gorilla/websocket v1.4.2
+## explicit; go 1.12
+# github.com/jmoiron/sqlx v0.0.0-20161209024531-cac998c4f095
+## explicit
+github.com/jmoiron/sqlx
+github.com/jmoiron/sqlx/reflectx
+# github.com/klauspost/compress v1.2.2-0.20170114130832-461e8fd8397a
+## explicit
+github.com/klauspost/compress/flate
+github.com/klauspost/compress/gzip
+github.com/klauspost/compress/zlib
+# github.com/klauspost/cpuid v0.0.0-20160302075316-09cded8978dc
+## explicit
+github.com/klauspost/cpuid
+# github.com/klauspost/crc32 v0.0.0-20161016154125-cb6bfca970f6
+## explicit
+github.com/klauspost/crc32
+# github.com/leavengood/websocket v0.0.0-20170104145153-470559ebf58e
+## explicit
+github.com/leavengood/websocket
+# github.com/lib/pq v1.10.4
+## explicit; go 1.13
+# github.com/mattn/go-sqlite3 v1.14.9
+## explicit; go 1.12
+# github.com/onsi/ginkgo v1.16.5
+## explicit; go 1.16
+# github.com/onsi/gomega v1.17.0
+## explicit; go 1.16
+# github.com/rcrowley/goagain v0.0.0-20140424170347-f2f192b5d1a9
+## explicit
+github.com/rcrowley/goagain
+# github.com/serenize/snaker v0.0.0-20161123064335-543781d2b79b
+## explicit
+github.com/serenize/snaker
+# github.com/thehowl/conf v0.1.1-0.20161010150023-bdfc17531a74
+## explicit
+github.com/thehowl/conf
+# github.com/thehowl/go-osuapi v0.0.0-20161017202541-77ef7867f23c
+## explicit
+github.com/thehowl/go-osuapi
+# github.com/valyala/bytebufferpool v1.0.0
+## explicit
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasthttp v0.0.0-20170118172047-2ada93a6dff4
+## explicit
+github.com/valyala/fasthttp
+github.com/valyala/fasthttp/fasthttputil
+github.com/valyala/fasthttp/stackless
+# gopkg.in/redis.v5 v5.2.1
+## explicit
+gopkg.in/redis.v5
+gopkg.in/redis.v5/internal
+gopkg.in/redis.v5/internal/consistenthash
+gopkg.in/redis.v5/internal/hashtag
+gopkg.in/redis.v5/internal/pool
+gopkg.in/redis.v5/internal/proto
+# gopkg.in/thehowl/go-osuapi.v1 v1.0.0-20161017202541-77ef7867f23c
+## explicit
+gopkg.in/thehowl/go-osuapi.v1
+# zxq.co/ripple/agplwarning v0.0.0-20180204104638-d3a3d0ee424f
+## explicit
+zxq.co/ripple/agplwarning
+# zxq.co/ripple/ocl v0.0.0-20160518155525-b499c4fc6bcd
+## explicit
+zxq.co/ripple/ocl
+# zxq.co/ripple/schiavolib v0.0.0-20161109210250-9cdc674dad07
+## explicit
+zxq.co/ripple/schiavolib
+# zxq.co/ripple/semantic-icons-ugc v0.0.0-20161123190331-82d4c266de98
+## explicit
+zxq.co/ripple/semantic-icons-ugc
+# zxq.co/x/getrank v0.0.0-20170418183109-97d2823cf77d
+## explicit
+zxq.co/x/getrank

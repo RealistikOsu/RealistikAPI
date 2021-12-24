@@ -16,8 +16,8 @@ import (
 	"github.com/RealistikOsu/RealistikAPI/common"
 	
 	//Add-on
-	"github.com/Hazuki-san/hmrapi"
-	"github.com/denmarkistrash/mitsuha"
+	"github.com/RealistikOsu/RealistikAPI/app/hmrapi"
+	"github.com/RealistikOsu/RealistikAPI/app/mitsuha"
 )
 
 var (
