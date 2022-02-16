@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/thehowl/go-osuapi.v1"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"gopkg.in/thehowl/go-osuapi.v1"
 	"zxq.co/x/getrank"
 )
 
@@ -16,6 +16,7 @@ type userScore struct {
 
 type userScoresResponse struct {
 	common.ResponseBase
+	//Total  string      `json:"total"`
 	Scores []userScore `json:"scores"`
 }
 
@@ -82,7 +83,7 @@ func UserScoresBestGET(md common.MethodData) common.CodeMessager {
 	if cm != nil {
 		return *cm
 	}
-	
+
 	mc := genModeClause(md)
 	// For all modes that have PP, we leave out 0 PP scores.
 
@@ -98,7 +99,7 @@ func UserScoresBestGET(md common.MethodData) common.CodeMessager {
 			ORDER BY scores_relax.pp DESC, scores_relax.score DESC %s`,
 			wc, mc, common.Paginate(md.Query("p"), md.Query("l"), 100),
 		), param)
-	} 
+	}
 	if common.Int(md.Query("rx")) == 2 {
 		mc = strings.Replace(mc, "scores.", "scores_ap.", 1)
 		return autoPuts(md, fmt.Sprintf(
@@ -131,36 +132,45 @@ func UserScoresRecentGET(md common.MethodData) common.CodeMessager {
 	if cm != nil {
 		return *cm
 	}
+	recentClause := ""
+	if md.Query("filter") == "recent" {
+		recentClause = " AND scores.completed > 1 "
+	}
 	mc := genModeClause(md)
 	if common.Int(md.Query("rx")) == 1 {
 		mc = strings.Replace(mc, "scores.", "scores_relax.", 1)
+		recentClause = strings.Replace(recentClause, "scores.", "scores_relax.", 1)
 		return relaxPuts(md, fmt.Sprintf(
 			`WHERE
 				%s
 				%s
+				%s
 				AND `+md.User.OnlyUserPublic(true)+`
 			ORDER BY scores_relax.id DESC %s`,
-			wc, mc, common.Paginate(md.Query("p"), md.Query("l"), 100),
+			wc, mc, recentClause, common.Paginate(md.Query("p"), md.Query("l"), 100),
 		), param)
 	}
 	if common.Int(md.Query("rx")) == 2 {
 		mc = strings.Replace(mc, "scores.", "scores_ap.", 1)
+		recentClause = strings.Replace(recentClause, "scores.", "scores_ap.", 1)
 		return autoPuts(md, fmt.Sprintf(
 			`WHERE
 				%s
 				%s
+				%s
 				AND `+md.User.OnlyUserPublic(true)+`
 			ORDER BY scores_ap.id DESC %s`,
-			wc, mc, common.Paginate(md.Query("p"), md.Query("l"), 100),
+			wc, mc, recentClause, common.Paginate(md.Query("p"), md.Query("l"), 100),
 		), param)
 	} else {
 		return scoresPuts(md, fmt.Sprintf(
 			`WHERE
 				%s
 				%s
+				%s
 				AND `+md.User.OnlyUserPublic(true)+`
 			ORDER BY scores.id DESC %s`,
-			wc, genModeClause(md), common.Paginate(md.Query("p"), md.Query("l"), 100),
+			wc, genModeClause(md), recentClause, common.Paginate(md.Query("p"), md.Query("l"), 100),
 		), param)
 	}
 }
@@ -209,8 +219,10 @@ func scoresPuts(md common.MethodData, whereClause string, params ...interface{})
 		scores = append(scores, us)
 	}
 	r := userScoresResponse{}
+	//md.DB.Get(&r.Total, "SELECT COUNT(*) FROM scores WHERE ")
 	r.Code = 200
 	r.Scores = scores
+	//r.Total = strconv.Itoa(len(r.Scores))
 	return r
 }
 
@@ -260,6 +272,7 @@ func relaxPuts(md common.MethodData, whereClause string, params ...interface{}) 
 	r := userScoresResponse{}
 	r.Code = 200
 	r.Scores = scores
+	//r.Total = strconv.Itoa(len(r.Scores))
 	return r
 }
 
@@ -309,5 +322,6 @@ func autoPuts(md common.MethodData, whereClause string, params ...interface{}) c
 	r := userScoresResponse{}
 	r.Code = 200
 	r.Scores = scores
+	//r.Total = strconv.Itoa(len(r.Scores))
 	return r
 }

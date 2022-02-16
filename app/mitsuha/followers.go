@@ -3,6 +3,7 @@ package mitsuha
 import (
 	"database/sql"
 	"strconv"
+
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
@@ -28,49 +29,43 @@ type friendsGETResponse struct {
 
 type subsCountGetResponse struct {
 	common.ResponseBase
-	SubsCount string `json:"subscount"`
+	SubsCount   string `json:"subscount"`
+	AllFriended string `json:"allFriended"`
 }
 
+const MyFriendsQuery = `
+	SELECT             
+		users.id, users.username, users.register_datetime, 
+		users.privileges, users.latest_activity,
+		users_stats.username_aka,
+		users_stats.country
+	FROM 
+		users_relationships
+	LEFT JOIN 
+		users
+	ON 
+		users_relationships.user1 = users.id
+	LEFT JOIN 
+		users_stats
+	ON 
+		users_relationships.user1=users_stats.id
+	WHERE 
+		users_relationships.user2=? 
+	AND 
+		NOT EXISTS 
+			(SELECT * FROM users_relationships WHERE users_relationships.user1=? AND users_relationships.user2=users.id)
+	`
+
 func FollowersGET(md common.MethodData) common.CodeMessager {
-	var HasDonor bool
-	HasDonor = md.User.UserPrivileges&common.UserPrivilegeDonor > 0
-	if !HasDonor {
-		return common.SimpleResponse(400, "non-donor")
-	}
 
 	var myFrienders []int
-	myFriendersRaw, err := md.DB.Query("SELECT user1 FROM users_relationships WHERE user2 = ?", md.ID())
+	err := md.DB.Get(myFrienders, "SELECT user1 FROM users_relationships WHERE user2 = ?", md.ID())
 	if err != nil {
 		md.Err(err)
 		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
 	}
-	defer myFriendersRaw.Close()
-	for myFriendersRaw.Next() {
-		var i int
-		err := myFriendersRaw.Scan(&i)
-		if err != nil {
-			md.Err(err)
-			continue
-		}
-		myFrienders = append(myFrienders, i)
-	}
-	if err := myFriendersRaw.Err(); err != nil {
-		md.Err(err)
-	}
 
-	myFriendsQuery := `
-SELECT             
-	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.username_aka,
-	users_stats.country
-FROM users_relationships
-LEFT JOIN users
-ON users_relationships.user1 = users.id
-LEFT JOIN users_stats
-ON users_relationships.user1=users_stats.id
-WHERE users_relationships.user2=? AND NOT EXISTS (SELECT * FROM users_relationships WHERE users_relationships.user1=? AND users_relationships.user2=users.id)
-`
-
+	myFriendsQuery := MyFriendsQuery
 	myFriendsQuery += common.Sort(md, common.SortConfiguration{
 		Allowed: []string{
 			"id",
@@ -108,41 +103,54 @@ WHERE users_relationships.user2=? AND NOT EXISTS (SELECT * FROM users_relationsh
 	return r
 }
 
+const myFriendsCount = `
+	SELECT
+		COUNT(users.id)
+	FROM 
+		users_relationships
+	INNER JOIN 
+		users
+	ON 
+		users_relationships.user1 = users.id
+	WHERE 
+		users_relationships.user2=? 
+	AND 
+		NOT EXISTS
+			(SELECT * FROM users_relationships WHERE users_relationships.user1=? AND users_relationships.user2=users.id)
+`
+
+const allFriendedCount = `
+	SELECT
+		COUNT(user1)
+	FROM
+		users_relationships
+	WHERE 
+		user2 = ?
+`
+
 func FollowersGetResponse(md common.MethodData) common.CodeMessager {
 	userid, err := strconv.Atoi(md.Query("userid"))
 	if err != nil {
 		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
 	}
 
-	myFriendsQuery := `
-SELECT             
-	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.username_aka,
-	users_stats.country
-FROM users_relationships
-LEFT JOIN users
-ON users_relationships.user1 = users.id
-LEFT JOIN users_stats
-ON users_relationships.user1=users_stats.id
-WHERE users_relationships.user2=? AND NOT EXISTS (SELECT * FROM users_relationships WHERE users_relationships.user1=? AND users_relationships.user2=users.id)`
-
 	r := subsCountGetResponse{}
-	results, err := md.DB.Query(myFriendsQuery, userid, userid)
+	var userIds int
+	err = md.DB.Get(&userIds, myFriendsCount, userid, userid)
 	if err != nil {
 		md.Err(err)
 		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
 	}
 
-	var count int = 0
-	defer results.Close()
-	for results.Next() {
-		count+=1
+	var allFriended int
+	err = md.DB.Get(&allFriended, allFriendedCount, userid)
+	if err != nil {
+		md.Err(err)
+		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
 	}
 
-	if err := results.Err(); err != nil {
-		md.Err(err)
-	}
-	r.SubsCount = strconv.Itoa(count)
+	r.SubsCount = strconv.Itoa(userIds)
+	r.AllFriended = strconv.Itoa(allFriended)
 	r.Code = 200
 	return r
 }

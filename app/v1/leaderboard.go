@@ -9,8 +9,8 @@ import (
 
 	redis "gopkg.in/redis.v5"
 
-	"zxq.co/ripple/ocl"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"zxq.co/ripple/ocl"
 )
 
 type leaderboardUser struct {
@@ -141,7 +141,7 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 		key = "ripple:leaderboard_ap:" + m
 	}
 	if country != "" {
-		key += ":" + country
+		key += ":" + strings.ToLower(country)
 	}
 	if sorted == "" {
 		sorted = "pp"

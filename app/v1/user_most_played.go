@@ -5,13 +5,13 @@ import (
 )
 
 type mostPlayedBeatmap struct {
-	Beatmap beatmap `json:"beatmap"`
-	PlayCount int	`json:"playcount"`
+	Beatmap   beatmap `json:"beatmap"`
+	PlayCount int     `json:"playcount"`
 }
 
 type mostPlayedBeatmapResponse struct {
 	common.ResponseBase
-	Total string `json:"total"`
+	Total    string              `json:"total"`
 	Beatmaps []mostPlayedBeatmap `json:"beatmaps"`
 }
 
@@ -54,6 +54,7 @@ WHERE ` + whereClause + ` ORDER BY users_beatmap_playcount.playcount DESC ` +
 		}
 		r.Beatmaps = append(r.Beatmaps, mpb)
 	}
+	//r.Total = strconv.Itoa(len(r.Beatmaps))
 	r.Code = 200
 	return r
 }
