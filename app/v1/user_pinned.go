@@ -42,6 +42,7 @@ func UserPinnedGET(md common.MethodData) common.CodeMessager {
 		JOIN scores%[1]s ON scores%[1]s.id = scoreid
 		JOIN beatmaps on scores%[1]s.beatmap_md5 = beatmaps.beatmap_md5
 		WHERE user_pinned.userid = ? AND scores%[1]s.play_mode = ?
+		ORDER BY user_pinned.pin_date DESC
 	`, dbs[playmode]) + common.Paginate(md.Query("p"), md.Query("l"), 100)
 
 	rows, err := md.DB.Query(query, userid, mode)
@@ -85,8 +86,30 @@ func UserPinnedGET(md common.MethodData) common.CodeMessager {
 	return scoreResponse
 }
 
-func UserUnpinDELETE() {
-	panic("unimplemented")
+// TODO: make this a delete route instead of post
+func UserPinnedDeletePOST(md common.MethodData) common.CodeMessager {
+	var scorePinned bool
+
+	res := common.ResponseBase{}
+	scoreid := common.Int(md.Query("score_id"))
+	err := md.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM user_pinned WHERE scoreid = ? AND userid = ?)", scoreid, md.User.UserID).Scan(&scorePinned)
+
+	if err != nil && err != sql.ErrNoRows {
+		md.Err(err)
+		return Err500
+	} else if !scorePinned {
+		return common.SimpleResponse(400, "Score is not pinned.")
+	}
+
+	_, err = md.DB.Exec("DELETE FROM user_pinned WHERE scoreid = ? AND userid = ?", scoreid, md.User.UserID)
+	if err != nil {
+		md.Err(err)
+		return Err500
+	}
+
+	res.Code = 200
+	res.Message = "success!"
+	return res
 }
 
 func UserPinnedPOST(md common.MethodData) common.CodeMessager {

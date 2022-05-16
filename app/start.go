@@ -123,6 +123,7 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 
 		// Write privilege required
 		r.POSTMethod("/api/v1/users/scores/pinned", v1.UserPinnedPOST, common.PrivilegeWrite)
+		r.POSTMethod("/api/v1/users/scores/pinned/delete", v1.UserPinnedDeletePOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/friends/add", v1.FriendsAddPOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/friends/del", v1.FriendsDelPOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/users/self/settings", v1.UsersSelfSettingsPOST, common.PrivilegeWrite)
