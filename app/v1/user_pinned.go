@@ -8,11 +8,20 @@ import (
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
+type pinnedInfo struct {
+	common.ResponseBase
+	Pinned struct {
+		UserID int `json:"userid"`
+		ScoreID int `json:"scoreid"`
+		PinnedAt int64 `json:"pinned_at"`
+	}
+}
+
 func UserPinnedGET(md common.MethodData) common.CodeMessager {
 	scoreResponse := userScoresResponse{}
 	dbs := []string{"", "_relax", "_ap"}
 
-	playmode := common.Int(md.Query("playmode"))
+	playmode := common.Int(md.Query("rx"))
 	mode := common.Int(md.Query("mode"))
 	userid := common.Int(md.Query("id"))
 
@@ -117,7 +126,7 @@ func UserPinnedPOST(md common.MethodData) common.CodeMessager {
 	var scorePinned bool
 	var pinDatetime int64 = time.Now().Unix()
 
-	mode := common.Int(md.Query("playmode"))
+	mode := common.Int(md.Query("rx"))
 	exists := []string{
 		"SELECT EXISTS(SELECT 1 FROM scores WHERE id = ? AND completed != 0 AND userid = ?);",
 		"SELECT EXISTS(SELECT 1 FROM scores_relax WHERE id = ? AND completed != 0 AND userid = ?);",
@@ -155,5 +164,28 @@ func UserPinnedPOST(md common.MethodData) common.CodeMessager {
 	}
 
 	res.Message = "success!"
+	return res
+}
+
+func PinnedScoreGET(md common.MethodData) common.CodeMessager {
+	res := pinnedInfo{}
+	scoreid := common.Int(md.Query("id"))
+	err := md.DB.QueryRow("SELECT * FROM user_pinned WHERE scoreid = ?", scoreid).Scan(
+		&res.Pinned.UserID,
+		&res.Pinned.ScoreID,
+		&res.Pinned.PinnedAt,
+	)
+
+	if err != nil && err != sql.ErrNoRows {
+		md.Err(err)
+		return Err500
+	}
+
+	if res.Pinned.ScoreID == 0 {
+		res.Code = 404
+		return res
+	}
+
+	res.Code = 200
 	return res
 }
