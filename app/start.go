@@ -103,6 +103,8 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/users/scores/recent", v1.UserScoresRecentGET)
 		r.Method("/api/v1/users/scores/first", v1.UserFirstGET) // Thanks Akatsuki!
 		r.Method("/api/v1/first/oldest", v1.OldestFirstGET)
+		r.Method("/api/v1/users/scores/pinned", v1.UserPinnedGET)
+		r.Method("/api/v1/users/scores/pinned/info", v1.PinnedScoreGET)
 		r.Method("/api/v1/badges", v1.BadgesGET)
 		r.Method("/api/v1/badges/members", v1.BadgeMembersGET)
 		r.Method("/api/v1/beatmaps", v1.BeatmapGET)
@@ -122,6 +124,8 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/users/self/settings", v1.UsersSelfSettingsGET, common.PrivilegeReadConfidential)
 
 		// Write privilege required
+		r.POSTMethod("/api/v1/users/scores/pinned", v1.UserPinnedPOST, common.PrivilegeWrite)
+		r.POSTMethod("/api/v1/users/scores/pinned/delete", v1.UserPinnedDeletePOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/friends/add", v1.FriendsAddPOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/friends/del", v1.FriendsDelPOST, common.PrivilegeWrite)
 		r.POSTMethod("/api/v1/users/self/settings", v1.UsersSelfSettingsPOST, common.PrivilegeWrite)
