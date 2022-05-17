@@ -14,7 +14,7 @@ type pinnedInfo struct {
 		UserID int `json:"userid"`
 		ScoreID int `json:"scoreid"`
 		PinnedAt int64 `json:"pinned_at"`
-	}
+	} `json:"pinned"`
 }
 
 func UserPinnedGET(md common.MethodData) common.CodeMessager {
@@ -127,6 +127,8 @@ func UserPinnedPOST(md common.MethodData) common.CodeMessager {
 	var pinDatetime int64 = time.Now().Unix()
 
 	mode := common.Int(md.Query("rx"))
+	scoreid := common.Int(md.Query("score_id"))
+
 	exists := []string{
 		"SELECT EXISTS(SELECT 1 FROM scores WHERE id = ? AND completed != 0 AND userid = ?);",
 		"SELECT EXISTS(SELECT 1 FROM scores_relax WHERE id = ? AND completed != 0 AND userid = ?);",
@@ -138,7 +140,6 @@ func UserPinnedPOST(md common.MethodData) common.CodeMessager {
 	}
 
 	res := common.ResponseBase{}
-	scoreid := common.Int(md.Query("score_id"))
 	err := md.DB.QueryRow(exists[mode], scoreid, md.User.UserID).Scan(&scoreExists)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -163,6 +164,7 @@ func UserPinnedPOST(md common.MethodData) common.CodeMessager {
 		return Err500
 	}
 
+	res.Code = 200
 	res.Message = "success!"
 	return res
 }
