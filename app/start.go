@@ -5,16 +5,16 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
-	fhr "github.com/buaazp/fasthttprouter"
-	"github.com/getsentry/raven-go"
-	"github.com/jmoiron/sqlx"
-	"gopkg.in/redis.v5"
 	"github.com/RealistikOsu/RealistikAPI/app/internals"
 	"github.com/RealistikOsu/RealistikAPI/app/peppy"
 	v1 "github.com/RealistikOsu/RealistikAPI/app/v1"
 	"github.com/RealistikOsu/RealistikAPI/app/websockets"
 	"github.com/RealistikOsu/RealistikAPI/common"
-	
+	fhr "github.com/buaazp/fasthttprouter"
+	"github.com/getsentry/raven-go"
+	"github.com/jmoiron/sqlx"
+	"gopkg.in/redis.v5"
+
 	//Add-on
 	"github.com/RealistikOsu/RealistikAPI/app/hmrapi"
 	"github.com/RealistikOsu/RealistikAPI/app/mitsuha"
@@ -102,6 +102,7 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/users/scores/best", v1.UserScoresBestGET)
 		r.Method("/api/v1/users/scores/recent", v1.UserScoresRecentGET)
 		r.Method("/api/v1/users/scores/first", v1.UserFirstGET) // Thanks Akatsuki!
+		r.Method("/api/v1/first/oldest", v1.OldestFirstGET)
 		r.Method("/api/v1/badges", v1.BadgesGET)
 		r.Method("/api/v1/badges/members", v1.BadgeMembersGET)
 		r.Method("/api/v1/beatmaps", v1.BeatmapGET)
@@ -166,7 +167,6 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/users/get_activity", hmrapi.LogsGET)
 		r.Method("/api/v1/mitsuha/followers_friends", mitsuha.FollowersGET)
 	}
-
 
 	// Websocket API
 	{

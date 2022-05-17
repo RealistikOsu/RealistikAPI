@@ -201,71 +201,49 @@ func AllClanStatsGET(md common.MethodData) common.CodeMessager {
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpStd * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpStd)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreStd
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreStd
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountStd
 			}
-			// for u := 0; u < len(members.Members); u++ {
 
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreStd
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreStd
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountStd
-			// }
 		} else if n == "taiko" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpTaiko > members.Members[j].PpTaiko
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpTaiko * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpTaiko)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreTaiko
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreTaiko
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountTaiko
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpTaiko
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreTaiko
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreTaiko
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountTaiko
-			// }
+
 		} else if n == "ctb" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpCtb > members.Members[j].PpCtb
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpCtb * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpCtb)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreCtb
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreCtb
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountCtb
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpCtb
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreCtb
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreCtb
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountCtb
-			// }
+
 		} else if n == "mania" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpMania > members.Members[j].PpMania
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpStd * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpMania)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreMania
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreMania
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountMania
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpMania
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreMania
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreMania
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountMania
-			// }
+
 		}
-		//r.Clans[i].ChosenMode.PP = (r.Clans[i].ChosenMode.PP / (len(members.Members) + 1))
 	}
 
 	sort.Slice(r.Clans, func(i, j int) bool {
@@ -352,71 +330,49 @@ func TotalClanStatsGET(md common.MethodData) common.CodeMessager {
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpStd * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpStd)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreStd
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreStd
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountStd
 			}
-			// for u := 0; u < len(members.Members); u++ {
 
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreStd
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreStd
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountStd
-			// }
 		} else if n == "taiko" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpTaiko > members.Members[j].PpTaiko
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpTaiko * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpTaiko)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreTaiko
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreTaiko
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountTaiko
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpTaiko
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreTaiko
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreTaiko
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountTaiko
-			// }
+
 		} else if n == "ctb" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpCtb > members.Members[j].PpCtb
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpCtb * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpCtb)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreCtb
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreCtb
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountCtb
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpCtb
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreCtb
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreCtb
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountCtb
-			// }
+
 		} else if n == "mania" {
 			sort.Slice(members.Members, func(i, j int) bool {
 				return members.Members[i].PpMania > members.Members[j].PpMania
 			})
 
 			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + (u.PpStd * int(math.Pow(0.95, float64(idx)))) //r.Clans[i].ChosenMode.PP + members.Members[u].PpStd
+				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpMania)*math.Pow(0.95, float64(idx)))
 				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreMania
 				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreMania
 				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountMania
 			}
-			// for u := 0; u < len(members.Members); u++ {
-			// 	r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + members.Members[u].PpMania
-			// 	r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + members.Members[u].RankedScoreMania
-			// 	r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + members.Members[u].TotalScoreMania
-			// 	r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + members.Members[u].PlaycountMania
-			// }
+
 		}
-		//r.Clans[i].ChosenMode.PP = (r.Clans[i].ChosenMode.PP / (len(members.Members) + 1))
 	}
 
 	sort.Slice(r.Clans, func(i, j int) bool {
