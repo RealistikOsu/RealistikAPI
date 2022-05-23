@@ -10,7 +10,6 @@ import (
 )
 
 // TODO: Allow users to disable comments (through settings and admin panel)
-// TODO: Let cm remove comments
 // TODO? Profanity check
 
 const (
@@ -139,6 +138,28 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 	return res
 }
 
-func CommentDELETE() {
-	panic("unimplemented")
+func CommentDELETE(md common.MethodData) common.CodeMessager {
+	var op int
+
+	res := common.ResponseBase{}
+	id := common.Int(md.Query("id"))
+
+	if err := md.DB.QueryRow("SELECT op FROM user_comments WHERE user_comments.id = ?", id).Scan(&op); err != nil && err != sql.ErrNoRows {
+		md.Err(err)
+		return Err500
+	}
+
+	if (op == md.User.UserID || strings.Contains(md.User.UserPrivileges.String(), "AdminManageUsers")) && op != 0 {
+		_, err := md.DB.Exec("DELETE FROM user_comments WHERE id = ?", id)
+		if err != nil {
+			md.Err(err)
+			return Err500
+		}	
+
+		res.Code = 200
+		res.Message = "success!"
+		return res
+	}
+
+	return common.SimpleResponse(403, "You cannot delete this!")
 }
