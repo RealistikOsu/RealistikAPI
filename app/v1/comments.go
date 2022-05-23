@@ -3,13 +3,13 @@ package v1
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 // TODO: Allow users to disable comments (through settings and admin panel)
-// TODO: Let admin bypass disable_comments
 // TODO: Let cm remove comments
 // TODO? Profanity check
 
@@ -82,24 +82,22 @@ func CommentPOST(md common.MethodData) common.CodeMessager {
 
 func CommentGET(md common.MethodData) common.CodeMessager {
 	var commentsAllowed int
-	var userExists bool
+	var profileNotFound bool
 
 	res := comments{}
 	userid := common.Int(md.Query("id"))
-	err := md.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE privileges & 1 = 1 AND id = ?);", userid).Scan(&userExists)
+	canComment := fmt.Sprintf("SELECT disabled_comments FROM users WHERE id = ? AND %s;", md.User.OnlyUserPublic(true))
 
-	if err != nil && err != sql.ErrNoRows {
-		md.Err(err)
-		return Err500
+	if err := md.DB.QueryRow(canComment, userid).Scan(&commentsAllowed); err != nil {
+		if err == sql.ErrNoRows {
+			profileNotFound = true
+		} else {
+			md.Err(err)
+			return Err500
+		}
 	}
 
-	err = md.DB.QueryRow("SELECT disabled_comments FROM users WHERE id = ?;", userid).Scan(&commentsAllowed)
-	if err != nil && err != sql.ErrNoRows {
-		md.Err(err)
-		return Err500
-	}
-
-	if !userExists || commentsAllowed == 1 {
+	if (commentsAllowed == 1 && !strings.Contains(md.User.UserPrivileges.String(), "AdminManageUsers")) || profileNotFound {
 		return common.SimpleResponse(404, "Profile not found/comments are disabled.")
 	}
 
@@ -109,7 +107,7 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 			user_comments.msg, user_comments.comment_date,
 			users.username
 		FROM user_comments
-		INNER JOIN users ON users.id = user_comments.op
+		JOIN users ON users.id = user_comments.op
 		WHERE user_comments.prof = ? AND users.privileges & 1 = 1
 		ORDER BY user_comments.comment_date DESC
 	` + common.Paginate(md.Query("p"), md.Query("l"), 5)
@@ -123,7 +121,6 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 
 	for rows.Next() {
 		cmt := comment{}
-
 		err = rows.Scan(
 			&cmt.Op, &cmt.UserID,
 			&cmt.Message, &cmt.PostedAt,
