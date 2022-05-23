@@ -10,6 +10,7 @@ import (
 
 // TODO: Allow users to disable comments (through settings and admin panel)
 // TODO: Let admin bypass disable_comments
+// TODO: Let cm remove comments
 // TODO? Profanity check
 
 const (
@@ -19,8 +20,8 @@ const (
 
 type comment struct {
 	Op       int    `json:"op"`
-	UserID     int    `json:"userid"`
-	Username     string    `json:"username"`
+	UserID   int    `json:"userid"`
+	Username string `json:"username"`
 	Message  string `json:"message"`
 	PostedAt int64  `json:"posted_at"`
 }
