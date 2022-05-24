@@ -11,8 +11,8 @@ import (
 type pinnedInfo struct {
 	common.ResponseBase
 	Pinned struct {
-		UserID int `json:"userid"`
-		ScoreID int `json:"scoreid"`
+		UserID   int   `json:"userid"`
+		ScoreID  int   `json:"scoreid"`
 		PinnedAt int64 `json:"pinned_at"`
 	} `json:"pinned"`
 }

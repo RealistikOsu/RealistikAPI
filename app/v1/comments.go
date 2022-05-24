@@ -30,6 +30,12 @@ type comments struct {
 	Comments []comment `json:"comments"`
 }
 
+type commentInfo struct {
+	common.ResponseBase
+	Total    int  `json:"total"`
+	Disabled bool `json:"disabled"`
+}
+
 func CommentPOST(md common.MethodData) common.CodeMessager {
 	var commentDate int64 = time.Now().Unix()
 	var userExists bool
@@ -154,7 +160,7 @@ func CommentDELETE(md common.MethodData) common.CodeMessager {
 		if err != nil {
 			md.Err(err)
 			return Err500
-		}	
+		}
 
 		res.Code = 200
 		res.Message = "success!"
@@ -162,4 +168,26 @@ func CommentDELETE(md common.MethodData) common.CodeMessager {
 	}
 
 	return common.SimpleResponse(403, "You cannot delete this!")
+}
+
+func CommentInfoGET(md common.MethodData) common.CodeMessager {
+	res := commentInfo{}
+	id := common.Int(md.Query("id"))
+
+	if err := md.DB.QueryRow("SELECT COUNT(id) FROM user_comments WHERE prof = ?;", id).Scan(&res.Total); err != nil && err != sql.ErrNoRows {
+		md.Err(err)
+		return Err500
+	}
+
+	if err := md.DB.QueryRow("SELECT disabled_comments FROM users WHERE users.id = ? AND "+md.User.OnlyUserPublic(true), id).Scan(&res.Disabled); err != nil {
+		if err == sql.ErrNoRows {
+			return common.SimpleResponse(404, "User not found!")
+		} 
+
+		md.Err(err)
+		return Err500
+	}
+
+	res.Code = 200
+	return res
 }
