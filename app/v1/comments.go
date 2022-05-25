@@ -174,8 +174,9 @@ func CommentDELETE(md common.MethodData) common.CodeMessager {
 func CommentInfoGET(md common.MethodData) common.CodeMessager {
 	res := commentInfo{}
 	id := common.Int(md.Query("id"))
+	total := "SELECT COUNT(user_comments.id) FROM user_comments JOIN users ON users.id = user_comments.op WHERE prof = ? AND users.privileges & 1 = 1;"
 
-	if err := md.DB.QueryRow("SELECT COUNT(id) FROM user_comments WHERE prof = ?;", id).Scan(&res.Total); err != nil && err != sql.ErrNoRows {
+	if err := md.DB.QueryRow(total, id).Scan(&res.Total); err != nil && err != sql.ErrNoRows {
 		md.Err(err)
 		return Err500
 	}
