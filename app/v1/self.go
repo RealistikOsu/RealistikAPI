@@ -57,6 +57,7 @@ type userSettingsData struct {
 		Show *bool `json:"show"`
 	} `json:"custom_badge"`
 	PlayStyle *int `json:"play_style"`
+	DisableComments *bool `json:"disabled_comments"`
 }
 
 // UsersSelfSettingsPOST allows to modify information about the current user.
@@ -81,7 +82,8 @@ func UsersSelfSettingsPOST(md common.MethodData) common.CodeMessager {
 		Add("s.custom_badge_name", d.CustomBadge.Name).
 		Add("s.custom_badge_icon", d.CustomBadge.Icon).
 		Add("s.show_custom_badge", d.CustomBadge.Show).
-		Add("s.play_style", d.PlayStyle)
+		Add("s.play_style", d.PlayStyle).
+		Add("u.disabled_comments", d.DisableComments)
 	_, err := md.DB.Exec("UPDATE users u, users_stats s SET "+q.Fields()+" WHERE s.id = u.id AND u.id = ?", append(q.Parameters, md.ID())...)
 	if err != nil {
 		md.Err(err)
@@ -130,7 +132,7 @@ SELECT
 	u.email, s.username_aka, s.favourite_mode,
 	s.show_custom_badge, s.custom_badge_icon,
 	s.custom_badge_name, s.can_custom_badge,
-	s.play_style, u.flags
+	s.play_style, u.flags, u.disabled_comments
 FROM users u
 LEFT JOIN users_stats s ON u.id = s.id
 WHERE u.id = ?`, md.ID()).Scan(
@@ -138,7 +140,7 @@ WHERE u.id = ?`, md.ID()).Scan(
 		&r.Email, &r.UsernameAKA, &r.FavouriteMode,
 		&r.CustomBadge.Show, &r.CustomBadge.Icon,
 		&r.CustomBadge.Name, &ccb,
-		&r.PlayStyle, &r.Flags,
+		&r.PlayStyle, &r.Flags, &r.DisableComments,
 	)
 	if err != nil {
 		md.Err(err)
