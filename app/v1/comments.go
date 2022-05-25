@@ -18,8 +18,8 @@ const (
 )
 
 type comment struct {
+	ID       int    `json:"id"`
 	Op       int    `json:"op"`
-	UserID   int    `json:"userid"`
 	Username string `json:"username"`
 	Message  string `json:"message"`
 	PostedAt int64  `json:"posted_at"`
@@ -108,9 +108,9 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 
 	cquery := `
 		SELECT
-			user_comments.op, user_comments.prof,
-			user_comments.msg, user_comments.comment_date,
-			users.username
+			user_comments.op, user_comments.msg,
+			user_comments.comment_date,
+			users.username, user_comments.id
 		FROM user_comments
 		JOIN users ON users.id = user_comments.op
 		WHERE user_comments.prof = ? AND users.privileges & 1 = 1
@@ -127,9 +127,9 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 	for rows.Next() {
 		cmt := comment{}
 		err = rows.Scan(
-			&cmt.Op, &cmt.UserID,
+			&cmt.Op,
 			&cmt.Message, &cmt.PostedAt,
-			&cmt.Username,
+			&cmt.Username, &cmt.ID,
 		)
 
 		if err != nil {
@@ -146,16 +146,17 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 
 func CommentDELETE(md common.MethodData) common.CodeMessager {
 	var op int
+	var prof int
 
 	res := common.ResponseBase{}
 	id := common.Int(md.Query("id"))
 
-	if err := md.DB.QueryRow("SELECT op FROM user_comments WHERE user_comments.id = ?", id).Scan(&op); err != nil && err != sql.ErrNoRows {
+	if err := md.DB.QueryRow("SELECT op, prof FROM user_comments WHERE user_comments.id = ?", id).Scan(&op, &prof); err != nil && err != sql.ErrNoRows {
 		md.Err(err)
 		return Err500
 	}
 
-	if (op == md.User.UserID || strings.Contains(md.User.UserPrivileges.String(), "AdminManageUsers")) && op != 0 {
+	if (op == md.User.UserID || strings.Contains(md.User.UserPrivileges.String(), "AdminManageUsers") || prof == md.User.UserID) && op != 0 {
 		_, err := md.DB.Exec("DELETE FROM user_comments WHERE id = ?", id)
 		if err != nil {
 			md.Err(err)
@@ -182,7 +183,7 @@ func CommentInfoGET(md common.MethodData) common.CodeMessager {
 	if err := md.DB.QueryRow("SELECT disabled_comments FROM users WHERE users.id = ? AND "+md.User.OnlyUserPublic(true), id).Scan(&res.Disabled); err != nil {
 		if err == sql.ErrNoRows {
 			return common.SimpleResponse(404, "User not found!")
-		} 
+		}
 
 		md.Err(err)
 		return Err500
