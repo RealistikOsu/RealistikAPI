@@ -9,9 +9,6 @@ import (
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
-// TODO: Allow users to disable comments (through settings and admin panel)
-// TODO? Profanity check
-
 const (
 	MAX_LENGTH = 380
 	MIN_LENGTH = 3
