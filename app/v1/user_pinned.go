@@ -11,8 +11,8 @@ import (
 type pinnedInfo struct {
 	common.ResponseBase
 	Pinned struct {
-		UserID int `json:"userid"`
-		ScoreID int `json:"scoreid"`
+		UserID   int   `json:"userid"`
+		ScoreID  int   `json:"scoreid"`
 		PinnedAt int64 `json:"pinned_at"`
 	} `json:"pinned"`
 }
@@ -49,10 +49,11 @@ func UserPinnedGET(md common.MethodData) common.CodeMessager {
 			beatmaps.ranked_status_freezed, beatmaps.latest_update
 		FROM user_pinned
 		JOIN scores%[1]s ON scores%[1]s.id = scoreid
-		JOIN beatmaps on scores%[1]s.beatmap_md5 = beatmaps.beatmap_md5
-		WHERE user_pinned.userid = ? AND scores%[1]s.play_mode = ?
+		JOIN beatmaps ON scores%[1]s.beatmap_md5 = beatmaps.beatmap_md5
+		JOIN users ON user_pinned.userid = users.id
+		WHERE user_pinned.userid = ? AND scores%[1]s.play_mode = ? AND %[2]s
 		ORDER BY user_pinned.pin_date DESC
-	`, dbs[playmode]) + common.Paginate(md.Query("p"), md.Query("l"), 100)
+	`, dbs[playmode], md.User.OnlyUserPublic(true)) + common.Paginate(md.Query("p"), md.Query("l"), 100)
 
 	rows, err := md.DB.Query(query, userid, mode)
 
