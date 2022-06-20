@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/thehowl/go-osuapi.v1"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"gopkg.in/thehowl/go-osuapi.v1"
 	"zxq.co/x/getrank"
 )
 
@@ -78,8 +78,8 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 	if where.Clause == "" && md.Query("id") == "" {
 		return ErrMissingField("must specify at least one queried item")
 	}
-    
-    rx_ap := common.Int(md.Query("rx"))
+
+	rx_ap := common.Int(md.Query("rx"))
 
 	//prob should be somewhere else but eh
 	switch rx_ap {
@@ -119,12 +119,11 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 			genModeClause(md)+` `+sort+common.Paginate(md.Query("p"), md.Query("l"), 100), "FIF")
 	}
 
-	
 	where.Params = where.Params[:len(where.Params)-1]
 	// this isnt python dash
-    // Query := ""
-    var Query string
-    if rx_ap == 1 { 
+	// Query := ""
+	var Query string
+	if rx_ap == 1 {
 		Query = `
 		SELECT
 		scores_relax.id, scores_relax.beatmap_md5, scores_relax.score,
@@ -135,12 +134,12 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 		scores_relax.completed,
 	
 		users.id, users.username, users.register_datetime, users.privileges,
-		users.latest_activity, users_stats.username_aka, users_stats.country
+		users.latest_activity, users_stats.username_aka, users.country
 	FROM scores_relax
 	INNER JOIN users ON users.id = scores_relax.userid
 	INNER JOIN users_stats ON users_stats.id = scores_relax.userid
 `
-	} else if rx_ap == 2 { 
+	} else if rx_ap == 2 {
 		Query = `
 		SELECT
 	scores_ap.id, scores_ap.beatmap_md5, scores_ap.score,
@@ -151,13 +150,13 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 	scores_ap.completed,
 
 	users.id, users.username, users.register_datetime, users.privileges,
-	users.latest_activity, users_stats.username_aka, users_stats.country
+	users.latest_activity, users_stats.username_aka, users.country
 FROM scores_ap
 INNER JOIN users ON users.id = scores_ap.userid
 INNER JOIN users_stats ON users_stats.id = scores_ap.userid
 `
 	} else {
-        Query =`
+		Query = `
 SELECT
 	scores.id, scores.beatmap_md5, scores.score,
 	scores.max_combo, scores.full_combo, scores.mods,
@@ -167,13 +166,13 @@ SELECT
 	scores.completed,
 
 	users.id, users.username, users.register_datetime, users.privileges,
-	users.latest_activity, users_stats.username_aka, users_stats.country
+	users.latest_activity, users_stats.username_aka, users.country
 FROM scores
 INNER JOIN users ON users.id = scores.userid
 INNER JOIN users_stats ON users_stats.id = scores.userid
 `
-    }
-    fmt.Println(Query)
+	}
+	fmt.Println(Query)
 	rows, err := md.DB.Query(Query+where.Clause, where.Params...)
 	if err != nil {
 		md.Err(err)
@@ -342,7 +341,7 @@ func genModeClauseColumn(md common.MethodData, column string) string {
 	if md.Query("mode") != "" {
 		m, err := strconv.Atoi(md.Query("mode"))
 		if err == nil && m >= 0 && m <= 3 {
-			modeClause = fmt.Sprintf("AND " + column + " = '%d'", m)
+			modeClause = fmt.Sprintf("AND "+column+" = '%d'", m)
 		}
 	}
 	return modeClause

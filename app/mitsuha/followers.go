@@ -38,7 +38,7 @@ const MyFriendsQuery = `
 		users.id, users.username, users.register_datetime, 
 		users.privileges, users.latest_activity,
 		users_stats.username_aka,
-		users_stats.country
+		users.country
 	FROM 
 		users_relationships
 	LEFT JOIN 
