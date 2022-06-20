@@ -8,12 +8,12 @@ import (
 
 	"strings"
 
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"github.com/jmoiron/sqlx"
 	"github.com/thehowl/go-osuapi"
 	"github.com/valyala/fasthttp"
 	"gopkg.in/redis.v5"
 	"zxq.co/ripple/ocl"
-	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 // R is a redis client.
@@ -36,7 +36,7 @@ func GetUser(c *fasthttp.RequestCtx, db *sqlx.DB) {
 			users.id, users.username,
 			users_stats.playcount_%s, users_stats.ranked_score_%s, users_stats.total_score_%s,
 			users_stats.pp_%s, users_stats.avg_accuracy_%s,
-			users_stats.country
+			users.country
 		FROM users
 		LEFT JOIN users_stats ON users_stats.id = users.id
 		%s

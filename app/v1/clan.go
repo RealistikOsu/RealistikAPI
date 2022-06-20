@@ -84,7 +84,7 @@ type megaStats struct {
 const RXClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, rx_stats.username_aka,
 
-rx_stats.country, rx_stats.user_color,
+users.country, rx_stats.user_color,
 rx_stats.ranked_score_std, rx_stats.total_score_std, rx_stats.pp_std, rx_stats.playcount_std, rx_stats.replays_watched_std, rx_stats.total_hits_std,
 rx_stats.ranked_score_taiko, rx_stats.total_score_taiko, rx_stats.pp_taiko, rx_stats.playcount_taiko, rx_stats.replays_watched_taiko,rx_stats.total_hits_taiko,
 rx_stats.ranked_score_ctb, rx_stats.total_score_ctb, rx_stats.pp_ctb, rx_stats.playcount_ctb, rx_stats.replays_watched_ctb, rx_stats.total_hits_ctb,
@@ -100,7 +100,7 @@ WHERE clan = ? AND privileges & 1 = 1
 const VNClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, users_stats.username_aka,
 
-users_stats.country, users_stats.user_color,
+users.country, users_stats.user_color,
 users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std, users_stats.total_hits_std,
 users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko,users_stats.total_hits_taiko,
 users_stats.ranked_score_ctb, users_stats.total_score_ctb, users_stats.pp_ctb, users_stats.playcount_ctb, users_stats.replays_watched_ctb, users_stats.total_hits_ctb,
@@ -116,7 +116,7 @@ WHERE clan = ? AND privileges & 1 = 1
 const APClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, ap_stats.username_aka,
 
-ap_stats.country, ap_stats.user_color,
+users.country, ap_stats.user_color,
 ap_stats.ranked_score_std, ap_stats.total_score_std, ap_stats.pp_std, ap_stats.playcount_std, ap_stats.replays_watched_std, ap_stats.total_hits_std,
 ap_stats.ranked_score_taiko, ap_stats.total_score_taiko, ap_stats.pp_taiko, ap_stats.playcount_taiko, ap_stats.replays_watched_taiko,ap_stats.total_hits_taiko,
 ap_stats.ranked_score_ctb, ap_stats.total_score_ctb, ap_stats.pp_ctb, ap_stats.playcount_ctb, ap_stats.replays_watched_ctb, ap_stats.total_hits_ctb,
@@ -483,7 +483,7 @@ func ClanMembersGET(md common.MethodData) common.CodeMessager {
 		err := md.DB.Select(&members.Members, `SELECT users.id, users.username, users.register_datetime, users.privileges,
 			latest_activity, users_stats.username_aka,
 			
-			users_stats.country, users_stats.user_color,
+			users.country, users_stats.user_color,
 			users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std, users_stats.total_hits_std,
 			users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko, users_stats.total_hits_taiko
 			
@@ -507,7 +507,7 @@ func ClanMembersGET(md common.MethodData) common.CodeMessager {
 		err := md.DB.Select(&members.Members, `SELECT users.id, users.username, users.register_datetime, users.privileges,
 			latest_activity, users_stats.username_aka,
 			
-			users_stats.country, users_stats.user_color,
+			users.country, users_stats.user_color,
 			users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std,
 			users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko
 			

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"github.com/jmoiron/sqlx"
 	"zxq.co/ripple/ocl"
-	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 type userData struct {
@@ -24,7 +24,7 @@ type userData struct {
 
 const userFields = `SELECT users.id, users.username, register_datetime, users.privileges,
 	latest_activity, users_stats.username_aka,
-	users_stats.country
+	users.country
 FROM users
 INNER JOIN users_stats
 ON users.id=users_stats.id
@@ -79,13 +79,13 @@ func userPutsMulti(md common.MethodData) common.CodeMessager {
 		Where("users.privileges = ?", md.Query("privileges")).
 		Where("users.privileges & ? > 0", md.Query("has_privileges")).
 		Where("users.privileges & ? = 0", md.Query("has_not_privileges")).
-		Where("users_stats.country = ?", md.Query("country")).
+		Where("users.country = ?", md.Query("country")).
 		Where("users_stats.username_aka = ?", md.Query("name_aka")).
 		Where("privileges_groups.name = ?", md.Query("privilege_group")).
 		In("users.id", pm("ids")...).
 		In("users.username_safe", safeUsernameBulk(pm("names"))...).
 		In("users_stats.username_aka", pm("names_aka")...).
-		In("users_stats.country", pm("countries")...)
+		In("users.country", pm("countries")...)
 
 	var extraJoin string
 	if md.Query("privilege_group") != "" {
@@ -195,8 +195,8 @@ type userStats struct {
 }
 
 type generalStats struct {
-	Vanilla userStats `json:"vn"`
-	Relax   userStats `json:"rx"`
+	Vanilla   userStats `json:"vn"`
+	Relax     userStats `json:"rx"`
 	Autopilot userStats `json:"ap"`
 }
 
@@ -219,38 +219,38 @@ type silenceInfo struct {
 	End    common.UnixTimestamp `json:"end"`
 }
 type userNotFullResponse struct {
-	Id             int                  `json:"id"`
-	Username       string               `json:"username"`
-	UsernameAKA    string               `json:"username_aka"`
-	RegisteredOn   common.UnixTimestamp `json:"registered_on"`
-	Privileges     uint64               `json:"privileges"`
-	LatestActivity common.UnixTimestamp `json:"latest_activity"`
-	Country        string               `json:"country"`
-	UserColor        string               `json:"user_color"`
-	RankedScoreStd            uint64  `json:"ranked_score_std"`
-	TotalScoreStd             uint64  `json:"total_score_std"`
-	PlaycountStd              int     `json:"playcount_std"`
-	ReplaysWatchedStd         int     `json:"replays_watched_std"`
-	TotalHitsStd              int     `json:"total_hits_std"`
-	PpStd                     int     `json:"pp_std"`
-	RankedScoreTaiko            uint64  `json:"ranked_score_taiko"`
-	TotalScoreTaiko             uint64  `json:"total_score_taiko"`
-	PlaycountTaiko              int     `json:"playcount_taiko"`
-	ReplaysWatchedTaiko         int     `json:"replays_watched_taiko"`
-	TotalHitsTaiko              int     `json:"total_hits_taiko"`
-	PpTaiko                     int     `json:"pp_taiko"`
-	RankedScoreCtb            uint64  `json:"ranked_score_ctb"`
-	TotalScoreCtb            uint64  `json:"total_score_ctb"`
-	PlaycountCtb              int     `json:"playcount_ctb"`
-	ReplaysWatchedCtb         int     `json:"replays_watched_ctb"`
-	TotalHitsCtb              int     `json:"total_hits_ctb"`
-	PpCtb                     int     `json:"pp_ctb"`
-	RankedScoreMania            uint64  `json:"ranked_score_mania"`
-	TotalScoreMania             uint64  `json:"total_score_mania"`
-	PlaycountMania              int     `json:"playcount_mania"`
-	ReplaysWatchedMania         int     `json:"replays_watched_mania"`
-	TotalHitsMania              int     `json:"total_hits_mania"`
-	PpMania                     int     `json:"pp_mania"`
+	Id                  int                  `json:"id"`
+	Username            string               `json:"username"`
+	UsernameAKA         string               `json:"username_aka"`
+	RegisteredOn        common.UnixTimestamp `json:"registered_on"`
+	Privileges          uint64               `json:"privileges"`
+	LatestActivity      common.UnixTimestamp `json:"latest_activity"`
+	Country             string               `json:"country"`
+	UserColor           string               `json:"user_color"`
+	RankedScoreStd      uint64               `json:"ranked_score_std"`
+	TotalScoreStd       uint64               `json:"total_score_std"`
+	PlaycountStd        int                  `json:"playcount_std"`
+	ReplaysWatchedStd   int                  `json:"replays_watched_std"`
+	TotalHitsStd        int                  `json:"total_hits_std"`
+	PpStd               int                  `json:"pp_std"`
+	RankedScoreTaiko    uint64               `json:"ranked_score_taiko"`
+	TotalScoreTaiko     uint64               `json:"total_score_taiko"`
+	PlaycountTaiko      int                  `json:"playcount_taiko"`
+	ReplaysWatchedTaiko int                  `json:"replays_watched_taiko"`
+	TotalHitsTaiko      int                  `json:"total_hits_taiko"`
+	PpTaiko             int                  `json:"pp_taiko"`
+	RankedScoreCtb      uint64               `json:"ranked_score_ctb"`
+	TotalScoreCtb       uint64               `json:"total_score_ctb"`
+	PlaycountCtb        int                  `json:"playcount_ctb"`
+	ReplaysWatchedCtb   int                  `json:"replays_watched_ctb"`
+	TotalHitsCtb        int                  `json:"total_hits_ctb"`
+	PpCtb               int                  `json:"pp_ctb"`
+	RankedScoreMania    uint64               `json:"ranked_score_mania"`
+	TotalScoreMania     uint64               `json:"total_score_mania"`
+	PlaycountMania      int                  `json:"playcount_mania"`
+	ReplaysWatchedMania int                  `json:"replays_watched_mania"`
+	TotalHitsMania      int                  `json:"total_hits_mania"`
+	PpMania             int                  `json:"pp_mania"`
 	// STD       clappedModeData  `json:"std"`
 	// Taiko     clappedModeData  `json:"taiko"`
 	// CTB       clappedModeData  `json:"ctb"`
@@ -268,7 +268,7 @@ func UserFullGET(md common.MethodData) common.CodeMessager {
 	query := `
 SELECT
 	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.username_aka, users_stats.country, users_stats.play_style, users_stats.favourite_mode,
+	users_stats.username_aka, users.country, users_stats.play_style, users_stats.favourite_mode,
 	users_stats.custom_badge_icon, users_stats.custom_badge_name, users_stats.can_custom_badge,
 	users_stats.show_custom_badge,
 
@@ -370,7 +370,6 @@ LIMIT 1
 		&r.Stats.Relax.Mania.RankedScore, &r.Stats.Relax.Mania.TotalScore, &r.Stats.Relax.Mania.PlayCount, &r.Stats.Relax.Mania.PlayTime,
 		&r.Stats.Relax.Mania.ReplaysWatched, &r.Stats.Relax.Mania.TotalHits,
 		&r.Stats.Relax.Mania.Accuracy, &r.Stats.Relax.Mania.PP, &r.Stats.Relax.Mania.MaxCombo,
-
 
 		&r.Stats.Autopilot.STD.RankedScore, &r.Stats.Autopilot.STD.TotalScore, &r.Stats.Autopilot.STD.PlayCount, &r.Stats.Autopilot.STD.PlayTime,
 		&r.Stats.Autopilot.STD.ReplaysWatched, &r.Stats.Autopilot.STD.TotalHits,

@@ -3,6 +3,7 @@ package hmrapi
 import (
 	"database/sql"
 	"strconv"
+
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
@@ -63,7 +64,7 @@ SELECT
 	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
 
 	users_stats.username_aka,
-	users_stats.country
+	users.country
 FROM users_relationships
 LEFT JOIN users
 ON users_relationships.user1 = users.id
@@ -120,7 +121,7 @@ SELECT
 	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
 
 	users_stats.username_aka,
-	users_stats.country
+	users.country
 FROM users_relationships
 LEFT JOIN users
 ON users_relationships.user1 = users.id
@@ -138,7 +139,7 @@ WHERE users_relationships.user2=? AND NOT EXISTS (SELECT * FROM users_relationsh
 	var count int = 0
 	defer results.Close()
 	for results.Next() {
-		count+=1
+		count += 1
 	}
 
 	if err := results.Err(); err != nil {

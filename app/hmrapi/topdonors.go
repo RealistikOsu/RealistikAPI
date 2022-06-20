@@ -22,7 +22,7 @@ type topDonorsResponse struct {
 const lbUserQuery = `
 SELECT
 	users.id, users.username, users_stats.username_aka, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.country, users.donor_expire
+	users.country, users.donor_expire
 FROM users
 INNER JOIN users_stats ON users_stats.id = users.id
 WHERE users.privileges >= 4 AND users.privileges != 1048576
@@ -65,7 +65,7 @@ func TopDonorsGET(md common.MethodData) common.CodeMessager {
 		}
 	}
 
-	if len(tempUsers)>8 {
+	if len(tempUsers) > 8 {
 		sortedUsers := make([]userData, 8)
 		copy(sortedUsers, tempUsers)
 		resp.Users = sortedUsers

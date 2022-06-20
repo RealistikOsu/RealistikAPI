@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	redis "gopkg.in/redis.v5"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	redis "gopkg.in/redis.v5"
 )
 
 type setAllowedData struct {
@@ -48,7 +48,7 @@ func UserManageSetAllowedPOST(md common.MethodData) common.CodeMessager {
 	query := `
 SELECT users.id, users.username, register_datetime, privileges,
 	latest_activity, users_stats.username_aka,
-	users_stats.country
+	users.country
 FROM users
 LEFT JOIN users_stats
 ON users.id=users_stats.id
