@@ -42,9 +42,9 @@ func GetScores(c *fasthttp.RequestCtx, db *sqlx.DB) {
 		table = "score_ap"
 	}
 
-	var sb = fmt.Sprintf("%s.score", table)
+	var sb = "s.score"
 	if rankable(query(c, "m")) {
-		sb = fmt.Sprintf("%s.pp", table)
+		sb = "s.pp"
 	}
 	var (
 		extraWhere  string
