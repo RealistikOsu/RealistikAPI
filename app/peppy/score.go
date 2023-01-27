@@ -46,6 +46,12 @@ func GetScores(c *fasthttp.RequestCtx, db *sqlx.DB) {
 	if rankable(query(c, "m")) {
 		sb = "s.pp"
 	}
+	
+	var completed = "3"
+	if query(c, "u") != "" {
+		completed = "2"
+	}
+	
 	var (
 		extraWhere  string
 		extraParams []interface{}
@@ -64,14 +70,14 @@ SELECT
 	s.accuracy
 FROM %s s
 INNER JOIN users ON users.id = s.userid
-WHERE s.completed = '3'
+WHERE s.completed >= ?
   AND users.privileges & 1 > 0
   AND s.beatmap_md5 = ?
   AND s.play_mode = ?
   AND s.mods & ? = ?
   `, table)+extraWhere+`
 ORDER BY `+sb+` DESC LIMIT `+strconv.Itoa(common.InString(1, query(c, "limit"), 100, 50)),
-		append([]interface{}{beatmapMD5, genmodei(query(c, "m")), mods, mods}, extraParams...)...)
+		append([]interface{}{completed, beatmapMD5, genmodei(query(c, "m")), mods, mods}, extraParams...)...)
 	if err != nil {
 		common.Err(c, err)
 		json(c, 200, defaultResponse)
