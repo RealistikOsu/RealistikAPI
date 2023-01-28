@@ -39,7 +39,7 @@ func GetScores(c *fasthttp.RequestCtx, db *sqlx.DB) {
 		table = "scores_relax"
 	}
 	if mods&4096 > 0 || rx == 2 {
-		table = "score_ap"
+		table = "scores_ap"
 	}
 
 	var sb = "s.score"
