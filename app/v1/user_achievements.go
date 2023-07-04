@@ -36,7 +36,7 @@ var achievs []Achievement
 
 type userAchievement struct {
 	Achievement
-	Achived bool            `json:"achived"`
+	Achieved bool           `json:"achieved"`
 	Info    AchievementUser `json:"info"`
 }
 
@@ -83,8 +83,8 @@ func UserAchievementsGET(md common.MethodData) common.CodeMessager {
 		// 	// }
 
 		// }
-		achived, curr_achi := inInt(achi.ID, users_achi)
-		resp.Achievements = append(resp.Achievements, userAchievement{achi, achived, curr_achi})
+		achieved, curr_achi := inInt(achi.ID, users_achi)
+		resp.Achievements = append(resp.Achievements, userAchievement{achi, achieved, curr_achi})
 		// if achived {
 		// 	resp.Achievements = append(resp.Achievements, userAchievement{achi, curr_achi})
 		// } else {
