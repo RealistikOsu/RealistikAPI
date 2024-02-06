@@ -475,7 +475,7 @@ LIMIT 1
 		r.Clan = clan
 	}
 
-	rows, err := md.DB.Query("SELECT username FROM user_name_history WHERE user_id = ?", r.ID)
+	rows, err = md.DB.Query("SELECT username FROM user_name_history WHERE user_id = ?", r.ID)
 	if err != nil {
 		md.Err(err)
 	}
