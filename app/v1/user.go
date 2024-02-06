@@ -203,6 +203,7 @@ type generalStats struct {
 type userFullResponse struct {
 	common.ResponseBase
 	userData
+	PastUsernames []string				`json:"past_usernames"`
 	Stats         generalStats          `json:"stats"`
 	PlayStyle     int                   `json:"play_style"`
 	FavouriteMode int                   `json:"favourite_mode"`
@@ -472,6 +473,26 @@ LIMIT 1
 			continue
 		}
 		r.Clan = clan
+	}
+
+	rows, err := md.DB.Query("SELECT username FROM user_name_history WHERE user_id = ?", r.ID)
+	if err != nil {
+		md.Err(err)
+	}
+
+	for rows.Next() {
+		var pastName string
+		err := rows.Scan(&pastName)
+		if err != nil {
+			md.Err(err)
+			continue
+		}
+
+		if pastName == r.Username { // don't show current username in past names
+			continue
+		}
+
+		r.PastUsernames = append(r.PastUsernames, pastName)
 	}
 
 	r.Code = 200
