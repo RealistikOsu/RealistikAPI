@@ -117,6 +117,7 @@ func Start(conf common.Conf, dbO *sqlx.DB) *fhr.Router {
 		r.Method("/api/v1/blog/posts", v1.BlogPostsGET)
 		r.Method("/api/v1/scores", v1.ScoresGET)
 		r.Method("/api/v1/beatmaps/rank_requests/status", v1.BeatmapRankRequestsStatusGET)
+		r.Method("/api/v1/hypothetical-rank", v1.HypotheticalRankGET)
 
 		// ReadConfidential privilege required
 		r.Method("/api/v1/friends", v1.FriendsGET, common.PrivilegeReadConfidential)
