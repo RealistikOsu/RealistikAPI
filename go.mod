@@ -26,6 +26,7 @@ require (
 require (
 	github.com/certifi/gocertifi v0.0.0-20160926115448-a61bf5eafa3a // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.2.2-0.20170114130832-461e8fd8397a // indirect
 	github.com/klauspost/cpuid v0.0.0-20160302075316-09cded8978dc // indirect
 	github.com/klauspost/crc32 v0.0.0-20161016154125-cb6bfca970f6 // indirect

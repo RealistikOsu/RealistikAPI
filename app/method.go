@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/valyala/fasthttp"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"github.com/valyala/fasthttp"
 )
 
 // Method wraps an API method to a HandlerFunc.
@@ -62,7 +62,8 @@ func initialCaretaker(c *fasthttp.RequestCtx, f func(md common.MethodData) commo
 	}
 
 	// log into datadog that this is an hanayo request
-	if b2s(c.Request.Header.Peek("H-Key")) == cf.HanayoKey && b2s(c.UserAgent()) == "hanayo" {
+	settings := common.GetSettings()
+	if b2s(c.Request.Header.Peek("H-Key")) == settings.HANAYO_KEY && b2s(c.UserAgent()) == "hanayo" {
 		doggoTags = append(doggoTags, "hanayo")
 	}
 

@@ -4,10 +4,9 @@ api
 api.conf
 debug
 launch.json
+main
+gitold/
 RealistikAPI
-realistkapi
-realistikapi.exe
 RealistikAPI.exe
-api.conf.save
-vendor/
 .env
+.git/
