@@ -32,6 +32,8 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jmoiron/sqlx v0.0.0-20161209024531-cac998c4f095 h1:6uwZHp3lyVH2mZxH/NLFbfBmbra2a2VDMSN2sp5NgGc=
 github.com/jmoiron/sqlx v0.0.0-20161209024531-cac998c4f095/go.mod h1:IiEW3SEiiErVyFdH8NTuWjSifiEQKUoyK3LNqr2kCHU=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/klauspost/compress v1.2.2-0.20170114130832-461e8fd8397a h1:ecqXXp3gkAsll6ttp8n5lu41qpvA4rA3n34Hxmh3q/k=
 github.com/klauspost/compress v1.2.2-0.20170114130832-461e8fd8397a/go.mod h1:RyIbtBH6LamlWaDj8nUwkbUhJ87Yi3uG0guNDohfE1A=
 github.com/klauspost/cpuid v0.0.0-20160302075316-09cded8978dc h1:WW8B7p7QBnFlqRVv/k6ro/S8Z7tCnYjJHcQNScx9YVs=
