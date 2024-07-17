@@ -12,4 +12,5 @@ RUN go build
 
 EXPOSE 80
 
+RUN chmod +x ./scripts/start.sh
 CMD ["./scripts/start.sh"]
