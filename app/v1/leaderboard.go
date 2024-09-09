@@ -27,7 +27,7 @@ type leaderboardResponse struct {
 
 const rxUserQuery = `
 		SELECT
-			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
+			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
 			users_stats.username_aka, users.country,
 			users_stats.play_style, users_stats.favourite_mode,
@@ -41,7 +41,7 @@ const rxUserQuery = `
 
 const apUserQuery = `
 		SELECT
-			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
+			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
 			users_stats.username_aka, users.country,
 			users_stats.play_style, users_stats.favourite_mode,
@@ -55,7 +55,7 @@ const apUserQuery = `
 
 const lbUserQuery = `
 		SELECT
-			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
+			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
 			users_stats.username_aka, users.country,
 			users_stats.play_style, users_stats.favourite_mode,
@@ -66,6 +66,16 @@ const lbUserQuery = `
 		FROM users
 		INNER JOIN users_stats ON users_stats.id = users.id `
 
+const lbCoinsUserQuery = `
+		SELECT
+			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
+
+			users_stats.username_aka, users.country,
+			users_stats.play_style, users_stats.favourite_mode,
+
+		FROM users
+		INNER JOIN users_stats ON users_stats.id = users.id `
+
 func getScoreLb(m string, rx int, p int, l int, country string, sorted string, md *common.MethodData) []leaderboardUser {
 	var query, order, whereClause string
 
@@ -73,24 +83,31 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 	case 1:
 		order = " ORDER BY rx_stats.ranked_score_%[1]s DESC, rx_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(rxUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	case 2:
 		order = " ORDER BY ap_stats.ranked_score_%[1]s DESC, ap_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(apUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	default:
 		order = " ORDER BY users_stats.ranked_score_%[1]s DESC, users_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(lbUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	}
 
-	rows, err := md.DB.Query(query)
+	var rows *sqlx.Rows
+	var err error
+	if country != "" {
+		rows, err = md.DB.Query(query, country)
+	}
+	else {
+		rows, err = md.DB.Query(query)
+	}
 	if err != nil {
 		md.Err(err)
 		return make([]leaderboardUser, 0)
@@ -113,6 +130,45 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 			continue
 		}
 		u.ChosenMode.Level = ocl.GetLevelPrecise(int64(u.ChosenMode.TotalScore))
+		users = append(users, u)
+	}
+	return users
+
+}
+
+func getCoinLb(p int, l int, country string, sorted string, md *common.MethodData) []leaderboardUser {
+	var query, order, whereClause string
+
+	if country != "" {
+		whereClause = " AND users.country = ?"
+	}
+	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+"ORDER BY users.coins DESC LIMIT %d, %d", m, p*l, l)
+
+	var rows *sqlx.Rows
+	var err error
+	if country != "" {
+		rows, err = md.DB.Query(query, country)
+	}
+	else {
+		rows, err = md.DB.Query(query)
+	}
+	if err != nil {
+		md.Err(err)
+		return make([]leaderboardUser, 0)
+	}
+	defer rows.Close()
+	var users []leaderboardUser
+	for i := 1; rows.Next(); i++ {
+		u := leaderboardUser{}
+		err := rows.Scan(
+			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
+
+			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode
+		)
+		if err != nil {
+			md.Err(err)
+			continue
+		}
 		users = append(users, u)
 	}
 	return users
@@ -149,6 +205,11 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 
 	if sorted == "score" {
 		response := leaderboardResponse{Users: getScoreLb(m, rx, p, l, country, sorted, &md)}
+		response.Code = 200
+		return response
+	}
+	if sorted == "coins" {
+		response := leaderboardResponse{Users: getCoinLb(p, l, country, sorted, &md)}
 		response.Code = 200
 		return response
 	}

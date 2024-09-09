@@ -65,7 +65,7 @@ SELECT
 FROM scores
 INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 INNER JOIN users ON users.id = scores.userid
-WHERE scores.pp > 0 AND scores.completed = '3' AND users.privileges & 1 > 0 AND scores.play_mode = %s
+WHERE scores.pp > 0 AND scores.completed = '3' AND users.privileges & 1 > 0 AND scores.play_mode = ?
 ORDER BY scores.pp DESC
 `
 
@@ -77,7 +77,7 @@ func TopPlaysGET(md common.MethodData) common.CodeMessager {
 	}
 	mode := md.Query("mode")
 
-	rows, err := md.DB.Query(fmt.Sprintf(topPlaysQuery, mode) + limitQuery)
+	rows, err := md.DB.Query(topPlaysQuery + limitQuery, mode)
 	if err != nil {
 		md.Err(err)
 		return common.SimpleResponse(500, "Oh god Realistik broke something again didnt he")
