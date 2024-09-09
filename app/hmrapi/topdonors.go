@@ -45,7 +45,7 @@ func TopDonorsGET(md common.MethodData) common.CodeMessager {
 		var privileges uint64
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.UsernameAKA, &u.RegisteredOn, &privileges, &u.LatestActivity,
-			&u.Country, &u.Expiration
+			&u.Country, &u.Expiration,
 		)
 		if err != nil {
 			md.Err(err)
