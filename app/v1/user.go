@@ -20,11 +20,12 @@ type userData struct {
 	Privileges     uint64               `json:"privileges"`
 	LatestActivity common.UnixTimestamp `json:"latest_activity"`
 	Country        string               `json:"country"`
+	Coins 		   int                  `json:"coins"`
 }
 
 const userFields = `SELECT users.id, users.username, register_datetime, users.privileges,
 	latest_activity, users_stats.username_aka,
-	users.country
+	users.country, users.coins
 FROM users
 INNER JOIN users_stats
 ON users.id=users_stats.id
@@ -269,7 +270,7 @@ func UserFullGET(md common.MethodData) common.CodeMessager {
 	query := `
 SELECT
 	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.username_aka, users.country, users_stats.play_style, users_stats.favourite_mode,
+	users_stats.username_aka, users.country, users.coins, users_stats.play_style, users_stats.favourite_mode,
 	users_stats.custom_badge_icon, users_stats.custom_badge_name, users_stats.can_custom_badge,
 	users_stats.show_custom_badge,
 
@@ -333,7 +334,7 @@ LIMIT 1
 		show bool
 	)
 	err := md.DB.QueryRow(query, param).Scan(
-		&r.ID, &r.Username, &r.RegisteredOn, &r.Privileges, &r.LatestActivity,
+		&r.ID, &r.Username, &r.RegisteredOn, &r.Privileges, &r.LatestActivity, &r.Coins,
 
 		&r.UsernameAKA, &r.Country,
 		&r.PlayStyle, &r.FavouriteMode,

@@ -12,7 +12,6 @@ type userData struct {
 	LatestActivity common.UnixTimestamp `json:"latest_activity"`
 	Country        string               `json:"country"`
 	Expiration     common.UnixTimestamp `json:"expiration"`
-	Coins 		   int                  `json:"coins"`
 }
 
 type topDonorsResponse struct {
@@ -46,7 +45,7 @@ func TopDonorsGET(md common.MethodData) common.CodeMessager {
 		var privileges uint64
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.UsernameAKA, &u.RegisteredOn, &privileges, &u.LatestActivity,
-			&u.Country, &u.Expiration,
+			&u.Country, &u.Expiration
 		)
 		if err != nil {
 			md.Err(err)
