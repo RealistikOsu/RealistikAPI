@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -100,12 +101,11 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 		query = fmt.Sprintf(lbUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	}
 
-	var rows *sqlx.Rows
+	var rows *sql.Rows
 	var err error
 	if country != "" {
 		rows, err = md.DB.Query(query, country)
-	}
-	else {
+	} else {
 		rows, err = md.DB.Query(query)
 	}
 	if err != nil {
@@ -137,19 +137,18 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 }
 
 func getCoinLb(p int, l int, country string, sorted string, md *common.MethodData) []leaderboardUser {
-	var query, order, whereClause string
+	var query, whereClause string
 
 	if country != "" {
 		whereClause = " AND users.country = ?"
 	}
-	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+"ORDER BY users.coins DESC LIMIT %d, %d", m, p*l, l)
+	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+"ORDER BY users.coins DESC LIMIT %d, %d", p*l, l)
 
-	var rows *sqlx.Rows
+	var rows *sql.Rows
 	var err error
 	if country != "" {
 		rows, err = md.DB.Query(query, country)
-	}
-	else {
+	} else {
 		rows, err = md.DB.Query(query)
 	}
 	if err != nil {
@@ -163,7 +162,7 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
-			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode
+			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
 		)
 		if err != nil {
 			md.Err(err)

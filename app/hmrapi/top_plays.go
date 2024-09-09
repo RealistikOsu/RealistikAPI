@@ -1,11 +1,11 @@
 package hmrapi
 
 import (
-	"fmt"
+	"database/sql"
 	"strings"
 
-	"gopkg.in/thehowl/go-osuapi.v1"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"gopkg.in/thehowl/go-osuapi.v1"
 	"zxq.co/x/getrank"
 )
 
@@ -73,11 +73,17 @@ func TopPlaysGET(md common.MethodData) common.CodeMessager {
 	limit := md.HasQuery("l")
 	limitQuery := " LIMIT 50"
 	if limit {
-		limitQuery = " LIMIT " + md.Query("l")
+		limitQuery = " LIMIT ?"
 	}
 	mode := md.Query("mode")
 
-	rows, err := md.DB.Query(topPlaysQuery + limitQuery, mode)
+	var rows *sql.Rows
+	var err error
+	if limit {
+		rows, err = md.DB.Query(topPlaysQuery+limitQuery, mode, md.Query("l"))
+	} else {
+		rows, err = md.DB.Query(topPlaysQuery+limitQuery, mode)
+	}
 	if err != nil {
 		md.Err(err)
 		return common.SimpleResponse(500, "Oh god Realistik broke something again didnt he")
