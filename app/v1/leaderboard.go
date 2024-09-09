@@ -83,24 +83,31 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 	case 1:
 		order = " ORDER BY rx_stats.ranked_score_%[1]s DESC, rx_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(rxUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	case 2:
 		order = " ORDER BY ap_stats.ranked_score_%[1]s DESC, ap_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(apUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	default:
 		order = " ORDER BY users_stats.ranked_score_%[1]s DESC, users_stats.pp_%[1]s DESC"
 		if country != "" {
-			whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+			whereClause = " AND users.country = ?"
 		}
 		query = fmt.Sprintf(lbUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+order+" LIMIT %d, %d", m, p*l, l)
 	}
 
-	rows, err := md.DB.Query(query)
+	var rows *sqlx.Rows
+	var err error
+	if country != "" {
+		rows, err = md.DB.Query(query, country)
+	}
+	else {
+		rows, err = md.DB.Query(query)
+	}
 	if err != nil {
 		md.Err(err)
 		return make([]leaderboardUser, 0)
@@ -133,11 +140,18 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 	var query, order, whereClause string
 
 	if country != "" {
-		whereClause = fmt.Sprintf(" AND users.country = '%s'", strings.ToUpper(country))
+		whereClause = " AND users.country = ?"
 	}
 	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+"ORDER BY users.coins DESC LIMIT %d, %d", m, p*l, l)
 
-	rows, err := md.DB.Query(query)
+	var rows *sqlx.Rows
+	var err error
+	if country != "" {
+		rows, err = md.DB.Query(query, country)
+	}
+	else {
+		rows, err = md.DB.Query(query)
+	}
 	if err != nil {
 		md.Err(err)
 		return make([]leaderboardUser, 0)
