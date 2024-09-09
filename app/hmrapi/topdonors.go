@@ -12,6 +12,7 @@ type userData struct {
 	LatestActivity common.UnixTimestamp `json:"latest_activity"`
 	Country        string               `json:"country"`
 	Expiration     common.UnixTimestamp `json:"expiration"`
+	Coins 		   int                  `json:"coins"`
 }
 
 type topDonorsResponse struct {
