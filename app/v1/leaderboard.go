@@ -149,17 +149,12 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
-			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
-
-			&u.ChosenMode.RankedScore, &u.ChosenMode.TotalScore, &u.ChosenMode.PlayCount,
-			&u.ChosenMode.ReplaysWatched, &u.ChosenMode.TotalHits,
-			&u.ChosenMode.Accuracy, &u.ChosenMode.PP,
+			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode
 		)
 		if err != nil {
 			md.Err(err)
 			continue
 		}
-		u.ChosenMode.Level = ocl.GetLevelPrecise(int64(u.ChosenMode.TotalScore))
 		users = append(users, u)
 	}
 	return users
