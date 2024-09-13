@@ -72,7 +72,7 @@ const lbCoinsUserQuery = `
 			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
 			users_stats.username_aka, users.country,
-			users_stats.play_style, users_stats.favourite_mode,
+			users_stats.play_style, users_stats.favourite_mode
 
 		FROM users
 		INNER JOIN users_stats ON users_stats.id = users.id `
@@ -117,7 +117,7 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 	for i := 1; rows.Next(); i++ {
 		u := leaderboardUser{}
 		err := rows.Scan(
-			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity,
+			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
 			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
 
@@ -142,7 +142,7 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 	if country != "" {
 		whereClause = " AND users.country = ?"
 	}
-	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+"ORDER BY users.coins DESC LIMIT %d, %d", p*l, l)
+	query = fmt.Sprintf(lbCoinsUserQuery+"WHERE (users.privileges & 3) >= 3"+whereClause+" ORDER BY users.coins DESC LIMIT %d, %d", p*l, l)
 
 	var rows *sql.Rows
 	var err error
@@ -242,7 +242,7 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 	for rows.Next() {
 		var u leaderboardUser
 		err := rows.Scan(
-			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity,
+			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
 			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
 

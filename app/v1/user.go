@@ -20,7 +20,7 @@ type userData struct {
 	Privileges     uint64               `json:"privileges"`
 	LatestActivity common.UnixTimestamp `json:"latest_activity"`
 	Country        string               `json:"country"`
-	Coins 		   int                  `json:"coins"`
+	Coins          int                  `json:"coins"`
 }
 
 const userFields = `SELECT users.id, users.username, register_datetime, users.privileges,
@@ -204,7 +204,7 @@ type generalStats struct {
 type userFullResponse struct {
 	common.ResponseBase
 	userData
-	PastUsernames []string				`json:"past_usernames"`
+	PastUsernames []string              `json:"past_usernames"`
 	Stats         generalStats          `json:"stats"`
 	PlayStyle     int                   `json:"play_style"`
 	FavouriteMode int                   `json:"favourite_mode"`
@@ -269,8 +269,8 @@ func UserFullGET(md common.MethodData) common.CodeMessager {
 	// Hellest query I've ever done.
 	query := `
 SELECT
-	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity,
-	users_stats.username_aka, users.country, users.coins, users_stats.play_style, users_stats.favourite_mode,
+	users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
+	users_stats.username_aka, users.country, users_stats.play_style, users_stats.favourite_mode,
 	users_stats.custom_badge_icon, users_stats.custom_badge_name, users_stats.can_custom_badge,
 	users_stats.show_custom_badge,
 
