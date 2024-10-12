@@ -57,6 +57,9 @@ const MyFriendsQuery = `
 	`
 
 func FollowersGET(md common.MethodData) common.CodeMessager {
+	if md.User.UserPrivileges&common.UserPrivilegeDonor == 0 {
+		return common.SimpleResponse(400, "non-donor")
+	}
 
 	var myFrienders []int
 	err := md.DB.Get(myFrienders, "SELECT user1 FROM users_relationships WHERE user2 = ?", md.ID())
