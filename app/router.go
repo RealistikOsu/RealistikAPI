@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/jmoiron/sqlx"
 	"github.com/valyala/fasthttp"
-	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 type router struct {
@@ -52,9 +52,22 @@ const (
 // - logging
 // - panic recovery (reporting to sentry)
 // - gzipping
+// - CORS headers
 func wrap(handle fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx) {
 		start := time.Now()
+
+		// Set CORS headers to allow all origins
+		c.Response.Header.Set("Access-Control-Allow-Origin", "*")
+		c.Response.Header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Response.Header.Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Ripple-Token")
+		c.Response.Header.Set("Access-Control-Max-Age", "86400")
+
+		// Handle preflight OPTIONS requests
+		if string(c.Method()) == "OPTIONS" {
+			c.SetStatusCode(204)
+			return
+		}
 
 		doggo.Incr("requests", nil, 1)
 
