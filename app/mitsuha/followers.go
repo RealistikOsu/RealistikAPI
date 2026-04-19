@@ -57,9 +57,12 @@ const MyFriendsQuery = `
 	`
 
 func FollowersGET(md common.MethodData) common.CodeMessager {
+	if md.User.UserPrivileges&common.UserPrivilegeDonor == 0 && md.User.UserPrivileges&common.AdminPrivilegeManageUsers == 0 {
+		return common.SimpleResponse(403, "This feature is restricted to RealistikOsu supporters only.")
+	}
 
 	var myFrienders []int
-	err := md.DB.Get(myFrienders, "SELECT user1 FROM users_relationships WHERE user2 = ?", md.ID())
+	err := md.DB.Select(&myFrienders, "SELECT user2 FROM users_relationships WHERE user1 = ?", md.ID())
 	if err != nil {
 		md.Err(err)
 		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
@@ -82,15 +85,17 @@ func FollowersGET(md common.MethodData) common.CodeMessager {
 		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
 	}
 
-	var myFriends []friendData
+	myFriends := make([]friendData, 0)
+
+	myFollowers := make(map[int]bool)
+	for _, id := range myFrienders {
+		myFollowers[id] = true
+	}
 
 	defer results.Close()
 	for results.Next() {
 		newFriend := friendPuts(md, results)
-		for range myFrienders {
-			newFriend.IsSubbed = true
-			break
-		}
+		newFriend.IsSubbed = myFollowers[newFriend.ID]
 		myFriends = append(myFriends, newFriend)
 	}
 	if err := results.Err(); err != nil {
@@ -129,9 +134,13 @@ const allFriendedCount = `
 `
 
 func FollowersGetResponse(md common.MethodData) common.CodeMessager {
-	userid, err := strconv.Atoi(md.Query("userid"))
+	uidStr := md.Query("userid")
+	if uidStr == "" {
+		return common.SimpleResponse(400, "Please provide a userid.")
+	}
+	userid, err := strconv.Atoi(uidStr)
 	if err != nil {
-		return common.SimpleResponse(500, "An error occurred. Trying again may work. If it doesn't, yell at this Mitsuha instance admin and tell them to fix the API.")
+		return common.SimpleResponse(400, "Invalid userid.")
 	}
 
 	r := subsCountGetResponse{}

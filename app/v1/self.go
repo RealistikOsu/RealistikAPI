@@ -65,9 +65,12 @@ func UsersSelfSettingsPOST(md common.MethodData) common.CodeMessager {
 	var d userSettingsData
 	md.Unmarshal(&d)
 
+	var canCustomBadge bool
+	md.DB.QueryRow("SELECT can_custom_badge FROM users_stats WHERE id = ?", md.ID()).Scan(&canCustomBadge)
+
 	// input sanitisation
 	*d.UsernameAKA = common.SanitiseString(*d.UsernameAKA)
-	if md.User.UserPrivileges&common.UserPrivilegeDonor > 0 {
+	if canCustomBadge {
 		d.CustomBadge.Name = common.SanitiseString(d.CustomBadge.Name)
 		d.CustomBadge.Icon = sanitiseIconName(d.CustomBadge.Icon)
 	} else {
@@ -114,17 +117,17 @@ func in(a string, b []string) bool {
 
 type userSettingsResponse struct {
 	common.ResponseBase
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Flags    uint   `json:"flags"`
+	ID             int    `json:"id"`
+	Username       string `json:"username"`
+	Email          string `json:"email"`
+	Flags          uint   `json:"flags"`
+	CanCustomBadge bool   `json:"can_custom_badge"`
 	userSettingsData
 }
 
 // UsersSelfSettingsGET allows to get "sensitive" information about the current user.
 func UsersSelfSettingsGET(md common.MethodData) common.CodeMessager {
 	var r userSettingsResponse
-	var ccb bool
 	r.Code = 200
 	err := md.DB.QueryRow(`
 SELECT
@@ -139,14 +142,14 @@ WHERE u.id = ?`, md.ID()).Scan(
 		&r.ID, &r.Username,
 		&r.Email, &r.UsernameAKA, &r.FavouriteMode,
 		&r.CustomBadge.Show, &r.CustomBadge.Icon,
-		&r.CustomBadge.Name, &ccb,
+		&r.CustomBadge.Name, &r.CanCustomBadge,
 		&r.PlayStyle, &r.Flags, &r.DisableComments,
 	)
 	if err != nil {
 		md.Err(err)
 		return Err500
 	}
-	if !ccb {
+	if !r.CanCustomBadge {
 		r.CustomBadge = struct {
 			singleBadge
 			Show *bool `json:"show"`
