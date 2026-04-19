@@ -134,7 +134,7 @@ func UserScoresRecentGET(md common.MethodData) common.CodeMessager {
 	}
 	recentClause := ""
 	if md.Query("filter") == "recent" {
-		recentClause = " AND scores.completed > 1 "
+		recentClause = " AND scores.completed > 1 AND scores.time > UNIX_TIMESTAMP() - 86400 " // 24 hours
 	}
 	mc := genModeClause(md)
 	if common.Int(md.Query("rx")) == 1 {

@@ -38,6 +38,16 @@ type beatmapSetResponse struct {
 	Beatmaps []beatmap `json:"beatmaps"`
 }
 
+type beatmapSetData struct {
+	BeatmapsetID       int                  `json:"beatmapset_id"`
+	Beatmaps           []beatmap            `json:"children"`
+}
+
+type beatmapSetSearchResponse struct {
+	common.ResponseBase
+	Beatmapsets []beatmapSetData  `json:"beatmapsets"`
+}
+
 type beatmapSetStatusData struct {
 	BeatmapsetID int `json:"beatmapset_id"`
 	BeatmapID    int `json:"beatmap_id"`
@@ -161,6 +171,73 @@ func getMultipleBeatmaps(md common.MethodData) common.CodeMessager {
 		}
 		r.Beatmaps = append(r.Beatmaps, b)
 	}
+	r.Code = 200
+	return r
+}
+
+func BeatmapSearchGET(md common.MethodData) common.CodeMessager {
+	// search for beatmapsets by name and group by beatmapset_id
+	query := md.Query("query")
+	if query == "" {
+		return common.SimpleResponse(400, "query parameter is required")
+	}
+
+	mode := common.Int(md.Query("mode"))
+	status := common.Int(md.Query("status"))
+
+	rows, err := md.DB.Query(`
+		SELECT beatmap_id, beatmapset_id, beatmap_md5, song_name, ar, od, difficulty_std, difficulty_taiko,
+		difficulty_ctb, difficulty_mania, max_combo, hit_length, ranked, ranked_status_freezed, latest_update
+		FROM beatmaps
+		WHERE (song_name LIKE ? OR beatmap_md5 LIKE ?) AND (mode = ? AND ranked_status_freezed = 1 AND ranked = ?)
+		GROUP BY beatmapset_id
+		ORDER BY latest_update DESC
+		LIMIT 100`, "%"+query+"%", "%"+query+"%", mode, status)
+
+	if err != nil {
+		md.Err(err)
+		return Err500
+	}
+
+	var r beatmapSetSearchResponse
+	var bm beatmapSetData
+
+	for rows.Next() {
+		var b beatmap
+		err = rows.Scan(
+			&b.BeatmapID, &b.BeatmapsetID, &b.BeatmapMD5, &b.SongName, &b.AR, &b.OD,
+			&b.Diff2.STD, &b.Diff2.Taiko, &b.Diff2.CTB, &b.Diff2.Mania,
+			&b.MaxCombo, &b.HitLength, &b.Ranked, &b.RankedStatusFrozen,
+			&b.LatestUpdate,
+		)
+		
+		if err != nil {
+			md.Err(err)
+			continue
+		}
+
+		if bm.BeatmapsetID == 0 {
+			bm.BeatmapsetID = b.BeatmapsetID
+		}
+
+		if b.BeatmapsetID != bm.BeatmapsetID {
+			r.Beatmapsets = append(r.Beatmapsets, bm)
+			bm = beatmapSetData{
+				BeatmapsetID: bm.BeatmapsetID,
+				Beatmaps:     []beatmap{},
+			}
+		}
+
+		b.Difficulty = b.Diff2.STD
+		bm.Beatmaps = append(bm.Beatmaps, b)
+	}
+	r.Beatmapsets = append(r.Beatmapsets, bm)
+
+	if err = rows.Err(); err != nil {
+		md.Err(err)
+		return Err500
+	}
+
 	r.Code = 200
 	return r
 }
