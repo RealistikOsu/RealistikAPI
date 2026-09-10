@@ -66,11 +66,15 @@ DESC LIMIT 5
 	for results.Next() {
 		var ls LogSimple
 		var s Score
-		results.Scan(
+		err := results.Scan(
 			&ls.SongName, &ls.LogBody, &ls.Time, &ls.ScoreID, &ls.BeatmapID,
 			&s.PlayMode, &s.Mods, &s.Accuracy, &s.Count300, &s.Count100, &s.Count50, &s.CountMiss,
 		)
-		
+		if err != nil {
+			md.Err(err)
+			continue
+		}
+
 		ls.Rank = strings.ToUpper(getrank.GetRank(
 			osuapi.Mode(s.PlayMode),
 			osuapi.Mods(s.Mods),

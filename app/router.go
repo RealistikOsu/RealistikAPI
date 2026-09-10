@@ -50,7 +50,7 @@ const (
 // wrap returns a function that wraps around handle, providing middleware
 // functionality to apply to all API calls, which is to say:
 // - logging
-// - panic recovery (reporting to sentry)
+// - panic recovery
 // - gzipping
 // - CORS headers
 func wrap(handle fasthttp.RequestHandler) fasthttp.RequestHandler {

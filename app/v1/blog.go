@@ -2,6 +2,7 @@ package v1
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"encoding/json"
 	"errors"
@@ -89,7 +90,7 @@ func init() {
 // BlogPostsGET retrieves the latest blog posts on the Ripple blog.
 func BlogPostsGET(md common.MethodData) common.CodeMessager {
 	// check if posts are cached in redis
-	res := md.R.Get("api:blog_posts").Val()
+	res := md.R.Get(context.Background(), "api:blog_posts").Val()
 	if res != "" {
 		// decode values
 		posts := make([]blogPost, 0, 20)
@@ -167,7 +168,7 @@ func BlogPostsGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
-	md.R.Set("api:blog_posts", bb.Bytes(), time.Minute*5)
+	md.R.Set(context.Background(), "api:blog_posts", bb.Bytes(), time.Minute*5)
 
 	var r blogPostsResponse
 	r.Code = 200

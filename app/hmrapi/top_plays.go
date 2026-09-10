@@ -88,6 +88,7 @@ func TopPlaysGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return common.SimpleResponse(500, "Oh god Realistik broke something again didnt he")
 	}
+	defer rows.Close()
 	var scores []MixedBeatmap
 	for rows.Next() {
 		var (

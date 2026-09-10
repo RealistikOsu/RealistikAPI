@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -103,9 +102,9 @@ var callbackJSONP = regexp.MustCompile(`^[a-zA-Z_\$][a-zA-Z0-9_\$]*$`)
 // mkjson auto indents json, and wraps json into a jsonp callback if specified by the request.
 // then writes to the RequestCtx the data.
 func mkjson(c *fasthttp.RequestCtx, data interface{}) {
-	exported, err := json.MarshalIndent(data, "", "\t")
+	exported, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println(err)
+		common.Err(c, err)
 		exported = []byte(`{ "code": 500, "message": "something has gone really really really really really really wrong." }`)
 	}
 	cb := string(c.URI().QueryArgs().Peek("callback"))

@@ -55,6 +55,7 @@ var userPrivilegeString = [...]string{
 	"AdminKickUsers",
 	"UserPendingVerification",
 	"UserTournamentStaff",
+	"AdminCaker",
 }
 
 func (p UserPrivileges) String() string {

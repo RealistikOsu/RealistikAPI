@@ -86,10 +86,8 @@ func OldestFirstGET(md common.MethodData) common.CodeMessager {
 	switch c_mode {
 	case 2:
 		table = "scores_ap"
-		break
 	case 1:
-		table = "scores_rx"
-		break
+		table = "scores_relax"
 	}
 
 	query := fmt.Sprintf(const_query, table, page_size, offset)
@@ -180,16 +178,24 @@ func UserFirstGET(md common.MethodData) common.CodeMessager {
 	if m != 0 {
 		mode = m
 	}
-	//the worst queries i ever done and its fact
-	query := "SELECT scores.id, scores.beatmap_md5, scores.score, scores.max_combo, scores.full_combo, scores.mods, scores.300_count, scores.100_count, scores.50_count, scores.katus_count, scores.gekis_count, scores.misses_count, scores.time, scores.play_mode, scores.accuracy, scores.pp, scores.completed, beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5, beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std, beatmaps.difficulty_std, beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania, beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked, beatmaps.ranked_status_freezed, beatmaps.latest_update FROM first_places, scores, beatmaps WHERE first_places.scoreid = scores.id AND scores.beatmap_md5 = beatmaps.beatmap_md5 AND scores.completed = 3 AND first_places.user_id = ? AND scores.play_mode = ? AND first_places.relax = 0 ORDER BY scores.time DESC "
 	rx := common.Int(md.Query("rx"))
-	if rx == 1 {
-		query = "SELECT scores_relax.id, scores_relax.beatmap_md5, scores_relax.score, scores_relax.max_combo, scores_relax.full_combo, scores_relax.mods, scores_relax.300_count, scores_relax.100_count, scores_relax.50_count, scores_relax.katus_count, scores_relax.gekis_count, scores_relax.misses_count, scores_relax.time, scores_relax.play_mode, scores_relax.accuracy, scores_relax.pp, scores_relax.completed, beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5, beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std, beatmaps.difficulty_std, beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania, beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked, beatmaps.ranked_status_freezed, beatmaps.latest_update FROM first_places, scores_relax, beatmaps WHERE first_places.score_id = scores_relax.id AND scores_relax.completed = 3 AND scores_relax.beatmap_md5 = beatmaps.beatmap_md5 AND first_places.user_id = ? AND scores_relax.play_mode = ? AND first_places.relax = 1 ORDER BY scores_relax.time DESC"
-	} else if rx == 2 {
-		query = "SELECT scores_ap.id, scores_ap.beatmap_md5, scores_ap.score, scores_ap.max_combo, scores_ap.full_combo, scores_ap.mods, scores_ap.300_count, scores_ap.100_count, scores_ap.50_count, scores_ap.katus_count, scores_ap.gekis_count, scores_ap.misses_count, scores_ap.time, scores_ap.play_mode, scores_ap.accuracy, scores_ap.pp, scores_ap.completed, beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5, beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std, beatmaps.difficulty_std, beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania, beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked, beatmaps.ranked_status_freezed, beatmaps.latest_update FROM first_places, scores_ap, beatmaps WHERE first_places.score_id = scores_ap.id AND scores_ap.completed = 3 AND scores_ap.beatmap_md5 = beatmaps.beatmap_md5 AND first_places.user_id = ? AND scores_ap.play_mode = ? AND first_places.relax = 2 ORDER BY scores_ap.time DESC"
-	} else {
-		query = "SELECT scores.id, scores.beatmap_md5, scores.score, scores.max_combo, scores.full_combo, scores.mods, scores.300_count, scores.100_count, scores.50_count, scores.katus_count, scores.gekis_count, scores.misses_count, scores.time, scores.play_mode, scores.accuracy, scores.pp, scores.completed, beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5, beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std, beatmaps.difficulty_std, beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania, beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked, beatmaps.ranked_status_freezed, beatmaps.latest_update FROM first_places, scores, beatmaps WHERE first_places.score_id = scores.id AND scores.beatmap_md5 = beatmaps.beatmap_md5 AND scores.completed = 3 AND first_places.user_id = ? AND scores.play_mode = ? AND first_places.relax = 0 ORDER BY scores.time DESC "
+	if rx != 1 && rx != 2 {
+		rx = 0
 	}
+	table := "scores" + rxTableSuffix(rx)
+	query := fmt.Sprintf(
+		"SELECT %[1]s.id, %[1]s.beatmap_md5, %[1]s.score, %[1]s.max_combo, %[1]s.full_combo, %[1]s.mods, "+
+			"%[1]s.300_count, %[1]s.100_count, %[1]s.50_count, %[1]s.katus_count, %[1]s.gekis_count, %[1]s.misses_count, "+
+			"%[1]s.time, %[1]s.play_mode, %[1]s.accuracy, %[1]s.pp, %[1]s.completed, "+
+			"beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5, beatmaps.song_name, beatmaps.ar, beatmaps.od, "+
+			"beatmaps.difficulty_std, beatmaps.difficulty_std, beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania, "+
+			"beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked, beatmaps.ranked_status_freezed, beatmaps.latest_update "+
+			"FROM first_places, %[1]s, beatmaps "+
+			"WHERE first_places.score_id = %[1]s.id AND %[1]s.completed = 3 AND %[1]s.beatmap_md5 = beatmaps.beatmap_md5 "+
+			"AND first_places.user_id = ? AND %[1]s.play_mode = ? AND first_places.relax = %[2]d "+
+			"ORDER BY %[1]s.time DESC ",
+		table, rx,
+	)
 	var (
 		r    tuser
 		rows *sql.Rows

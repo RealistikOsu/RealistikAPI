@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"strconv"
@@ -28,6 +29,7 @@ func BeatmapRankRequestsStatusGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	var r rankRequestsStatusResponse
 	// if it's not auth-free access and we have got ReadConfidential, we can
 	// know if this user can submit beatmaps or not.
@@ -118,7 +120,7 @@ func BeatmapRankRequestsSubmitPOST(md common.MethodData) common.CodeMessager {
 		// move on
 	case sql.ErrNoRows:
 		data, _ := json.Marshal(d)
-		md.R.Publish("lets:beatmap_updates", string(data))
+		md.R.Publish(context.Background(), "lets:beatmap_updates", string(data))
 	default:
 		md.Err(err)
 		return Err500

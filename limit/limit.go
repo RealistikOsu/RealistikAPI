@@ -55,8 +55,12 @@ func (s *RateLimiter) request(u string, perMinute int, blocking bool) bool {
 		} else {
 			s.Map[u] = c
 			s.Mutex.Unlock()
+			// This <-c already accounts for the current request, so return
+			// here instead of falling through to rcv below, which would
+			// consume a second token for the same request.
 			<-c
 			go s.filler(u, perMinute)
+			return true
 		}
 	}
 	return rcv(c, blocking)

@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -56,14 +57,11 @@ var scoreSubscriptions []scoreSubscription
 var scoreSubscriptionsMtx = new(sync.RWMutex)
 
 func scoreRetriever() {
-	ps, err := red.Subscribe("api:score_submission")
-	if err != nil {
-		fmt.Println(err)
-	}
+	ps := red.Subscribe(context.Background(), "api:score_submission")
 	for {
-		msg, err := ps.ReceiveMessage()
+		msg, err := ps.ReceiveMessage(context.Background())
 		if err != nil {
-			fmt.Println(err.Error())
+			common.GenericError(err)
 			return
 		}
 		go handleNewScore(msg.Payload)
@@ -100,7 +98,7 @@ FROM scores s
 INNER JOIN users u ON s.userid = u.id
 WHERE s.id = ?`, id)
 	if err != nil {
-		fmt.Println(err)
+		common.GenericError(err)
 		return
 	}
 	s.Rank = strings.ToUpper(getrank.GetRank(

@@ -53,6 +53,7 @@ func Beatmaps5GET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return common.SimpleResponse(500, "Oh god Realistik broke something again didnt he")
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var b beatmap
 		err := rows.Scan(

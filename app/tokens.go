@@ -28,7 +28,6 @@ WHERE token = ? LIMIT 1`,
 		Scan(
 			&t.ID, &t.UserID, &tokenPrivsRaw, &priv8, &userPrivsRaw,
 		)
-	updateTokens <- t.ID
 	if priv8 {
 		// all privileges, they'll get removed by canOnly anyway.
 		tokenPrivsRaw = (common.PrivilegeBeatmap << 1) - 1
@@ -39,8 +38,10 @@ WHERE token = ? LIMIT 1`,
 	case err == sql.ErrNoRows:
 		return common.Token{}, false
 	case err != nil:
-		panic(err)
+		common.GenericError(err)
+		return common.Token{}, false
 	default:
+		updateTokens <- t.ID
 		t.Value = token
 		return t, true
 	}
@@ -81,7 +82,7 @@ func tokenUpdater(db *sqlx.DB) {
 		q = db.Rebind(q)
 		_, err := db.Exec(q, a...)
 		if err != nil {
-			fmt.Println(err)
+			common.GenericError(err)
 		}
 	}
 }

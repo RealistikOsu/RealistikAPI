@@ -65,6 +65,7 @@ FROM beatmaps `+where+" ORDER BY beatmap_id DESC LIMIT "+limit,
 		json(c, 200, defaultResponse)
 		return
 	}
+	defer rows.Close()
 
 	var bms []osuapi.Beatmap
 	for rows.Next() {

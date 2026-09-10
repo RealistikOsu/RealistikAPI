@@ -120,6 +120,7 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		cmt := comment{}

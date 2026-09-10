@@ -12,7 +12,7 @@ import (
 	"github.com/RealistikOsu/RealistikAPI/common"
 	fhr "github.com/buaazp/fasthttprouter"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/redis.v5"
+	"github.com/redis/go-redis/v9"
 
 	//Add-on
 	"github.com/RealistikOsu/RealistikAPI/app/hmrapi"

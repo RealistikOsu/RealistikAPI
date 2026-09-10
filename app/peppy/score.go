@@ -83,6 +83,7 @@ ORDER BY `+sb+` DESC LIMIT `+strconv.Itoa(common.InString(1, query(c, "limit"), 
 		json(c, 200, defaultResponse)
 		return
 	}
+	defer rows.Close()
 	var results []osuapi.GSScore
 	for rows.Next() {
 		var (

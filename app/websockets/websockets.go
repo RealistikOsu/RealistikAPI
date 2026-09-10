@@ -3,7 +3,7 @@ package websockets
 
 import (
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/redis.v5"
+	"github.com/redis/go-redis/v9"
 )
 
 var (

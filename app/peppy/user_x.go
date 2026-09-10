@@ -51,6 +51,7 @@ func getUserX(c *fasthttp.RequestCtx, db *sqlx.DB, orderBy string, limit int) {
 		common.Err(c, err)
 		return
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var (
 			curscore osuapi.GUSScore

@@ -40,6 +40,7 @@ func TopDonorsGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return common.SimpleResponse(500, "Oh god Realistik broke something again didnt he")
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var u userData
 		var privileges uint64

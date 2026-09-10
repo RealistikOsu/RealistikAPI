@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	redis "gopkg.in/redis.v5"
+	redis "github.com/redis/go-redis/v9"
 
 	"github.com/RealistikOsu/RealistikAPI/common"
 	"zxq.co/ripple/ocl"
@@ -176,7 +177,7 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 
 // LeaderboardGET gets the leaderboard.
 func LeaderboardGET(md common.MethodData) common.CodeMessager {
-	m := getMode(md.Query("mode"))
+	m := modeName(common.Int(md.Query("mode")))
 
 	// md.Query.Country
 	p := common.Int(md.Query("p")) - 1
@@ -189,10 +190,10 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 	country := md.Query("country")
 
 	key := "ripple:leaderboard:" + m
-	if common.Int(md.Query("rx")) == 1 {
+	if rx == 1 {
 		key = "ripple:leaderboard_relax:" + m
 	}
-	if common.Int(md.Query("rx")) == 2 {
+	if rx == 2 {
 		key = "ripple:leaderboard_ap:" + m
 	}
 	if country != "" {
@@ -213,7 +214,7 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 		return response
 	}
 
-	results, err := md.R.ZRevRange(key, int64(p*l), int64(p*l+l-1)).Result()
+	results, err := md.R.ZRevRange(context.Background(), key, int64(p*l), int64(p*l+l-1)).Result()
 	if err != nil {
 		md.Err(err)
 		return Err500
@@ -226,12 +227,14 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 		return resp
 	}
 
-	query := fmt.Sprintf(lbUserQuery+`WHERE users.id IN (?) ORDER BY users_stats.pp_%[1]s DESC, users_stats.ranked_score_%[1]s DESC`, m)
-	if common.Int(md.Query("rx")) == 1 {
+	var query string
+	switch rx {
+	case 1:
 		query = fmt.Sprintf(rxUserQuery+`WHERE users.id IN (?) ORDER BY rx_stats.pp_%[1]s DESC, rx_stats.ranked_score_%[1]s DESC`, m)
-	}
-	if common.Int(md.Query("rx")) == 2 {
+	case 2:
 		query = fmt.Sprintf(apUserQuery+`WHERE users.id IN (?) ORDER BY ap_stats.pp_%[1]s DESC, ap_stats.ranked_score_%[1]s DESC`, m)
+	default:
+		query = fmt.Sprintf(lbUserQuery+`WHERE users.id IN (?) ORDER BY users_stats.pp_%[1]s DESC, users_stats.ranked_score_%[1]s DESC`, m)
 	}
 	query, params, _ := sqlx.In(query, results)
 	rows, err := md.DB.Query(query, params...)
@@ -239,6 +242,8 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
+	var users []leaderboardUser
 	for rows.Next() {
 		var u leaderboardUser
 		err := rows.Scan(
@@ -255,32 +260,63 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 			continue
 		}
 		u.ChosenMode.Level = ocl.GetLevelPrecise(int64(u.ChosenMode.TotalScore))
-		if common.Int(md.Query("rx")) == 1 {
-			if i := relaxboardPosition(md.R, m, u.ID); i != nil {
-				u.ChosenMode.GlobalLeaderboardRank = i
-			}
-			if i := rxcountryPosition(md.R, m, u.ID, u.Country); i != nil {
-				u.ChosenMode.CountryLeaderboardRank = i
-			}
-		}
-		if common.Int(md.Query("rx")) == 2 {
-			if i := autoPosition(md.R, m, u.ID); i != nil {
-				u.ChosenMode.GlobalLeaderboardRank = i
-			}
-			if i := apcountryPosition(md.R, m, u.ID, u.Country); i != nil {
-				u.ChosenMode.CountryLeaderboardRank = i
-			}
-		} else {
-			if i := leaderboardPosition(md.R, m, u.ID); i != nil {
-				u.ChosenMode.GlobalLeaderboardRank = i
-			}
-			if i := countryPosition(md.R, m, u.ID, u.Country); i != nil {
-				u.ChosenMode.CountryLeaderboardRank = i
-			}
-		}
-		resp.Users = append(resp.Users, u)
+		users = append(users, u)
 	}
+
+	fillLeaderboardRanks(md.R, leaderboardKeyPrefix(rx), m, users)
+	resp.Users = users
 	return resp
+}
+
+// leaderboardKeyPrefix returns the redis sorted-set key prefix used for both
+// global and per-country rank lookups for the given relax/autopilot mode.
+func leaderboardKeyPrefix(rx int) string {
+	switch rx {
+	case 1:
+		return "ripple:leaderboard_relax:"
+	case 2:
+		return "ripple:leaderboard_ap:"
+	default:
+		return "ripple:leaderboard:"
+	}
+}
+
+// fillLeaderboardRanks batches all global/country ZREVRANK lookups for the
+// given users into a single redis pipeline round-trip, instead of issuing up
+// to two blocking requests per user.
+func fillLeaderboardRanks(r *redis.Client, keyPrefix, mode string, users []leaderboardUser) {
+	if len(users) == 0 {
+		return
+	}
+
+	ctx := context.Background()
+	pipe := r.Pipeline()
+
+	globalCmds := make([]*redis.IntCmd, len(users))
+	countryCmds := make([]*redis.IntCmd, len(users))
+	for i, u := range users {
+		globalCmds[i] = pipe.ZRevRank(ctx, keyPrefix+mode, strconv.Itoa(u.ID))
+		if u.Country != "" {
+			countryCmds[i] = pipe.ZRevRank(ctx, keyPrefix+mode+":"+strings.ToLower(u.Country), strconv.Itoa(u.ID))
+		}
+	}
+	if _, err := pipe.Exec(ctx); err != nil && err != redis.Nil {
+		common.GenericError(err)
+		return
+	}
+
+	for i := range users {
+		if v, err := globalCmds[i].Result(); err == nil {
+			rank := int(v) + 1
+			users[i].ChosenMode.GlobalLeaderboardRank = &rank
+		}
+		if countryCmds[i] != nil {
+			if v, err := countryCmds[i].Result(); err == nil {
+				rank := int(v) + 1
+				users[i].ChosenMode.CountryLeaderboardRank = &rank
+			}
+		}
+	}
 }
 
 func leaderboardPosition(r *redis.Client, mode string, user int) *int {
@@ -308,7 +344,7 @@ func apcountryPosition(r *redis.Client, mode string, user int, country string) *
 }
 
 func _position(r *redis.Client, key string, user int) *int {
-	res := r.ZRevRank(key, strconv.Itoa(user))
+	res := r.ZRevRank(context.Background(), key, strconv.Itoa(user))
 	if res.Err() == redis.Nil {
 		return nil
 	}

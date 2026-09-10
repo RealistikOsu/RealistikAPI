@@ -63,13 +63,17 @@ type userSettingsData struct {
 // UsersSelfSettingsPOST allows to modify information about the current user.
 func UsersSelfSettingsPOST(md common.MethodData) common.CodeMessager {
 	var d userSettingsData
-	md.Unmarshal(&d)
+	if err := md.Unmarshal(&d); err != nil {
+		return ErrBadJSON
+	}
 
 	var canCustomBadge bool
 	md.DB.QueryRow("SELECT can_custom_badge FROM users_stats WHERE id = ?", md.ID()).Scan(&canCustomBadge)
 
 	// input sanitisation
-	*d.UsernameAKA = common.SanitiseString(*d.UsernameAKA)
+	if d.UsernameAKA != nil {
+		*d.UsernameAKA = common.SanitiseString(*d.UsernameAKA)
+	}
 	if canCustomBadge {
 		d.CustomBadge.Name = common.SanitiseString(d.CustomBadge.Name)
 		d.CustomBadge.Icon = sanitiseIconName(d.CustomBadge.Icon)
@@ -87,6 +91,9 @@ func UsersSelfSettingsPOST(md common.MethodData) common.CodeMessager {
 		Add("s.show_custom_badge", d.CustomBadge.Show).
 		Add("s.play_style", d.PlayStyle).
 		Add("u.disabled_comments", d.DisableComments)
+	if q.Fields() == "" {
+		return UsersSelfSettingsGET(md)
+	}
 	_, err := md.DB.Exec("UPDATE users u, users_stats s SET "+q.Fields()+" WHERE s.id = u.id AND u.id = ?", append(q.Parameters, md.ID())...)
 	if err != nil {
 		md.Err(err)

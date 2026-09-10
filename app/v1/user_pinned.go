@@ -19,7 +19,6 @@ type pinnedInfo struct {
 
 func UserPinnedGET(md common.MethodData) common.CodeMessager {
 	scoreResponse := userScoresResponse{}
-	dbs := []string{"", "_relax", "_ap"}
 
 	playmode := common.Int(md.Query("rx"))
 	mode := common.Int(md.Query("mode"))
@@ -53,7 +52,7 @@ func UserPinnedGET(md common.MethodData) common.CodeMessager {
 		JOIN users ON user_pinned.userid = users.id
 		WHERE user_pinned.userid = ? AND scores%[1]s.play_mode = ? AND %[2]s
 		ORDER BY user_pinned.pin_date DESC
-	`, dbs[playmode], md.User.OnlyUserPublic(true)) + common.Paginate(md.Query("p"), md.Query("l"), 100)
+	`, rxTableSuffix(playmode), md.User.OnlyUserPublic(true)) + common.Paginate(md.Query("p"), md.Query("l"), 100)
 
 	rows, err := md.DB.Query(query, userid, mode)
 
@@ -61,6 +60,7 @@ func UserPinnedGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var (

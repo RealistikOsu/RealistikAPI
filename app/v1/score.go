@@ -46,6 +46,22 @@ type scoresResponse struct {
 	Scores []beatmapScore `json:"scores"`
 }
 
+const scoreSelectBase = `
+SELECT
+	scores%[1]s.id, scores%[1]s.beatmap_md5, scores%[1]s.score,
+	scores%[1]s.max_combo, scores%[1]s.full_combo, scores%[1]s.mods,
+	scores%[1]s.300_count, scores%[1]s.100_count, scores%[1]s.50_count,
+	scores%[1]s.gekis_count, scores%[1]s.katus_count, scores%[1]s.misses_count,
+	scores%[1]s.time, scores%[1]s.play_mode, scores%[1]s.accuracy, scores%[1]s.pp,
+	scores%[1]s.completed,
+
+	users.id, users.username, users.register_datetime, users.privileges,
+	users.latest_activity, users_stats.username_aka, users.country
+FROM scores%[1]s
+INNER JOIN users ON users.id = scores%[1]s.userid
+INNER JOIN users_stats ON users_stats.id = scores%[1]s.userid
+`
+
 // ScoresGET retrieves the top scores for a certain beatmap.
 func ScoresGET(md common.MethodData) common.CodeMessager {
 	var (
@@ -70,114 +86,29 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 		where.Where("beatmap_md5 = ?", md5)
 	}
 
-	sort := common.Sort(md, common.SortConfiguration{
-		Default: "scores.pp DESC, scores.score DESC",
-		Table:   "scores",
-		Allowed: []string{"pp", "score", "accuracy", "id"},
-	})
 	if where.Clause == "" && md.Query("id") == "" {
 		return ErrMissingField("must specify at least one queried item")
 	}
 
 	rx_ap := common.Int(md.Query("rx"))
+	table := "scores" + rxTableSuffix(rx_ap)
 
-	//prob should be somewhere else but eh
-	switch rx_ap {
-	case 1:
-		where.In("scores_relax.id", pm("id")...)
+	where.In(table+".id", pm("id")...)
 
-		sort := common.Sort(md, common.SortConfiguration{
-			Default: "scores_relax.pp DESC, scores_relax.score DESC",
-			Table:   "scores_relax",
-			Allowed: []string{"pp", "score", "accuracy", "id"},
-		})
-		if where.Clause == "" && md.Query("id") == "" {
-			return ErrMissingField("must specify at least one queried item")
-		}
+	sort := common.Sort(md, common.SortConfiguration{
+		Default: table + ".pp DESC, " + table + ".score DESC",
+		Table:   table,
+		Allowed: []string{"pp", "score", "accuracy", "id"},
+	})
+	where.WhereRaw(` ` + table + `.completed = '3' AND ` + md.User.OnlyUserPublic(false) + ` ` +
+		genModeClause(md) + ` ` + sort + common.Paginate(md.Query("p"), md.Query("l"), 100))
 
-		where.Where(` scores_relax.completed = '3' AND `+md.User.OnlyUserPublic(false)+` `+
-			genModeClause(md)+` `+sort+common.Paginate(md.Query("p"), md.Query("l"), 100), "FIF")
-		break
-	case 2:
-		where.In("scores_ap.id", pm("id")...)
-
-		sort := common.Sort(md, common.SortConfiguration{
-			Default: "scores_ap.pp DESC, scores_ap.score DESC",
-			Table:   "scores_ap",
-			Allowed: []string{"pp", "score", "accuracy", "id"},
-		})
-		if where.Clause == "" && md.Query("id") == "" {
-			return ErrMissingField("must specify at least one queried item")
-		}
-
-		where.Where(` scores_ap.completed = '3' AND `+md.User.OnlyUserPublic(false)+` `+
-			genModeClause(md)+` `+sort+common.Paginate(md.Query("p"), md.Query("l"), 100), "FIF")
-		break
-	default:
-		where.In("scores.id", pm("id")...)
-		where.Where(` scores.completed = '3' AND `+md.User.OnlyUserPublic(false)+` `+
-			genModeClause(md)+` `+sort+common.Paginate(md.Query("p"), md.Query("l"), 100), "FIF")
-	}
-
-	where.Params = where.Params[:len(where.Params)-1]
-	// this isnt python dash
-	// Query := ""
-	var Query string
-	if rx_ap == 1 {
-		Query = `
-		SELECT
-		scores_relax.id, scores_relax.beatmap_md5, scores_relax.score,
-		scores_relax.max_combo, scores_relax.full_combo, scores_relax.mods,
-		scores_relax.300_count, scores_relax.100_count, scores_relax.50_count,
-		scores_relax.gekis_count, scores_relax.katus_count, scores_relax.misses_count,
-		scores_relax.time, scores_relax.play_mode, scores_relax.accuracy, scores_relax.pp,
-		scores_relax.completed,
-	
-		users.id, users.username, users.register_datetime, users.privileges,
-		users.latest_activity, users_stats.username_aka, users.country
-	FROM scores_relax
-	INNER JOIN users ON users.id = scores_relax.userid
-	INNER JOIN users_stats ON users_stats.id = scores_relax.userid
-`
-	} else if rx_ap == 2 {
-		Query = `
-		SELECT
-	scores_ap.id, scores_ap.beatmap_md5, scores_ap.score,
-	scores_ap.max_combo, scores_ap.full_combo, scores_ap.mods,
-	scores_ap.300_count, scores_ap.100_count, scores_ap.50_count,
-	scores_ap.gekis_count, scores_ap.katus_count, scores_ap.misses_count,
-	scores_ap.time, scores_ap.play_mode, scores_ap.accuracy, scores_ap.pp,
-	scores_ap.completed,
-
-	users.id, users.username, users.register_datetime, users.privileges,
-	users.latest_activity, users_stats.username_aka, users.country
-FROM scores_ap
-INNER JOIN users ON users.id = scores_ap.userid
-INNER JOIN users_stats ON users_stats.id = scores_ap.userid
-`
-	} else {
-		Query = `
-SELECT
-	scores.id, scores.beatmap_md5, scores.score,
-	scores.max_combo, scores.full_combo, scores.mods,
-	scores.300_count, scores.100_count, scores.50_count,
-	scores.gekis_count, scores.katus_count, scores.misses_count,
-	scores.time, scores.play_mode, scores.accuracy, scores.pp,
-	scores.completed,
-
-	users.id, users.username, users.register_datetime, users.privileges,
-	users.latest_activity, users_stats.username_aka, users.country
-FROM scores
-INNER JOIN users ON users.id = scores.userid
-INNER JOIN users_stats ON users_stats.id = scores.userid
-`
-	}
-	fmt.Println(Query)
-	rows, err := md.DB.Query(Query+where.Clause, where.Params...)
+	rows, err := md.DB.Query(fmt.Sprintf(scoreSelectBase, rxTableSuffix(rx_ap))+where.Clause, where.Params...)
 	if err != nil {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var (
 			s beatmapScore
@@ -319,16 +250,29 @@ func ScoreReportPOST(md common.MethodData) common.CodeMessager {
 	return repData
 }
 
-func getMode(m string) string {
-	switch m {
-	case "1":
-		return "taiko"
-	case "2":
-		return "ctb"
-	case "3":
-		return "mania"
-	default:
+// modeNames maps a mode ID (0-3) to its DB column suffix / redis key segment.
+var modeNames = [...]string{"std", "taiko", "ctb", "mania"}
+
+// modeName returns the mode name for the given mode ID, defaulting to "std"
+// for anything out of range.
+func modeName(m int) string {
+	if m < 0 || m >= len(modeNames) {
 		return "std"
+	}
+	return modeNames[m]
+}
+
+// rxTableSuffix maps an rx query param (0 = vanilla, 1 = relax, 2 =
+// autopilot) to the table/redis-key suffix used to pick the right variant of
+// a table (e.g. "scores" vs "scores_relax" vs "scores_ap").
+func rxTableSuffix(rx int) string {
+	switch rx {
+	case 1:
+		return "_relax"
+	case 2:
+		return "_ap"
+	default:
+		return ""
 	}
 }
 

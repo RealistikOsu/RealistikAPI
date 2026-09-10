@@ -2,6 +2,7 @@
 package peppy
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -10,9 +11,9 @@ import (
 
 	"github.com/RealistikOsu/RealistikAPI/common"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 	"github.com/thehowl/go-osuapi"
 	"github.com/valyala/fasthttp"
-	"gopkg.in/redis.v5"
 	"zxq.co/ripple/ocl"
 )
 
@@ -56,8 +57,8 @@ func GetUser(c *fasthttp.RequestCtx, db *sqlx.DB) {
 		return
 	}
 
-	user.Rank = int(R.ZRevRank("ripple:leaderboard:"+mode, strconv.Itoa(user.UserID)).Val()) + 1
-	user.CountryRank = int(R.ZRevRank("ripple:leaderboard:"+mode+":"+strings.ToLower(user.Country), strconv.Itoa(user.UserID)).Val()) + 1
+	user.Rank = int(R.ZRevRank(context.Background(), "ripple:leaderboard:"+mode, strconv.Itoa(user.UserID)).Val()) + 1
+	user.CountryRank = int(R.ZRevRank(context.Background(), "ripple:leaderboard:"+mode+":"+strings.ToLower(user.Country), strconv.Itoa(user.UserID)).Val()) + 1
 	user.Level = ocl.GetLevelPrecise(user.TotalScore)
 
 	json(c, 200, []osuapi.User{user})

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/RealistikOsu/RealistikAPI/common"
-	redis "gopkg.in/redis.v5"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type setAllowedData struct {
@@ -79,7 +80,6 @@ var privChangeList = [...]string{
 func UserEditPOST(md common.MethodData) common.CodeMessager {
 	var data userEditData
 	if err := md.Unmarshal(&data); err != nil {
-		fmt.Println(err)
 		return ErrBadJSON
 	}
 
@@ -157,7 +157,7 @@ func UserEditPOST(md common.MethodData) common.CodeMessager {
 			UserID      int    `json:"userID"`
 			NewUsername string `json:"newUsername"`
 		}{data.ID, *data.Username})
-		md.R.Publish("peppy:change_username", string(jsonData))
+		md.R.Publish(context.Background(), "peppy:change_username", string(jsonData))
 	}
 	if data.UsernameAKA != nil {
 		statsQ += "username_aka = ?,\n"
@@ -211,7 +211,7 @@ func UserEditPOST(md common.MethodData) common.CodeMessager {
 }
 
 func updateBanBancho(r *redis.Client, user int) error {
-	return r.Publish("peppy:ban", strconv.Itoa(user)).Err()
+	return r.Publish(context.Background(), "peppy:ban", strconv.Itoa(user)).Err()
 }
 
 type wipeUserData struct {
@@ -271,7 +271,7 @@ func WipeUserPOST(md common.MethodData) common.CodeMessager {
 		_, err = tx.Exec(strings.Replace(
 			`UPDATE users_stats SET total_score_MODE = 0, ranked_score_MODE = 0, replays_watched_MODE = 0,
 			playcount_MODE = 0, avg_accuracy_MODE = 0, total_hits_MODE = 0, level_MODE = 0, pp_MODE = 0
-			WHERE id = ?`, "MODE", modesToReadable[mode], -1,
+			WHERE id = ?`, "MODE", modeName(mode), -1,
 		), data.ID)
 		if err != nil {
 			md.Err(err)

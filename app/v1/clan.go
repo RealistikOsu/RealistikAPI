@@ -6,6 +6,8 @@ import (
 	"math"
 	"sort"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
@@ -81,7 +83,7 @@ type megaStats struct {
 	Clans []clanLbSingle `json:"clans"`
 }
 
-const RXClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
+const RXClanQuery = `SELECT uc.clan AS clan_id, users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, rx_stats.username_aka,
 
 users.country, rx_stats.user_color,
@@ -94,10 +96,10 @@ FROM user_clans uc
 INNER JOIN users
 ON users.id = uc.user
 INNER JOIN rx_stats ON rx_stats.id = uc.user
-WHERE clan = ? AND privileges & 1 = 1
+WHERE uc.clan IN (?) AND privileges & 1 = 1
 `
 
-const VNClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
+const VNClanQuery = `SELECT uc.clan AS clan_id, users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, users_stats.username_aka,
 
 users.country, users_stats.user_color,
@@ -110,10 +112,10 @@ FROM user_clans uc
 INNER JOIN users
 ON users.id = uc.user
 INNER JOIN users_stats ON users_stats.id = uc.user
-WHERE clan = ? AND privileges & 1 = 1
+WHERE uc.clan IN (?) AND privileges & 1 = 1
 `
 
-const APClanQuery = `SELECT users.id, users.username, users.register_datetime, users.privileges,
+const APClanQuery = `SELECT uc.clan AS clan_id, users.id, users.username, users.register_datetime, users.privileges,
 latest_activity, ap_stats.username_aka,
 
 users.country, ap_stats.user_color,
@@ -126,8 +128,89 @@ FROM user_clans uc
 INNER JOIN users
 ON users.id = uc.user
 INNER JOIN ap_stats ON ap_stats.id = uc.user
-WHERE clan = ? AND privileges & 1 = 1
+WHERE uc.clan IN (?) AND privileges & 1 = 1
 `
+
+// clanStatsMember is a clan member row enriched with the clan they belong
+// to, so all clans' members can be fetched in a single query instead of
+// issuing one query per clan (the previous behaviour: an O(clans) fan-out of
+// blocking DB round-trips on every /clans/stats/all request).
+type clanStatsMember struct {
+	userNotFullResponse
+	ClanID int `db:"clan_id"`
+}
+
+// clanQueryForRx returns the member-stats query for the given relax/autopilot mode.
+func clanQueryForRx(rx int) string {
+	switch rx {
+	case 1:
+		return RXClanQuery
+	case 2:
+		return APClanQuery
+	default:
+		return VNClanQuery
+	}
+}
+
+// loadClanStats fetches every member of the given clans in one query and
+// aggregates each clan's weighted pp (0.95 decay per rank position, matching
+// the per-clan pp weighting used elsewhere) plus ranked score/total
+// score/playcount totals for the given mode.
+func loadClanStats(md common.MethodData, clanIDs []int, rx int, mode string) (map[int]modeData, error) {
+	stats := make(map[int]modeData, len(clanIDs))
+	if len(clanIDs) == 0 {
+		return stats, nil
+	}
+
+	query, params, err := sqlx.In(clanQueryForRx(rx), clanIDs)
+	if err != nil {
+		return nil, err
+	}
+	var members []clanStatsMember
+	if err := md.DB.Select(&members, md.DB.Rebind(query), params...); err != nil {
+		return nil, err
+	}
+
+	byClan := make(map[int][]clanStatsMember)
+	for _, m := range members {
+		byClan[m.ClanID] = append(byClan[m.ClanID], m)
+	}
+
+	for clanID, cm := range byClan {
+		switch mode {
+		case "taiko":
+			sort.Slice(cm, func(i, j int) bool { return cm[i].PpTaiko > cm[j].PpTaiko })
+		case "ctb":
+			sort.Slice(cm, func(i, j int) bool { return cm[i].PpCtb > cm[j].PpCtb })
+		case "mania":
+			sort.Slice(cm, func(i, j int) bool { return cm[i].PpMania > cm[j].PpMania })
+		default:
+			sort.Slice(cm, func(i, j int) bool { return cm[i].PpStd > cm[j].PpStd })
+		}
+
+		var d modeData
+		for idx, u := range cm {
+			var pp, playcount int
+			var rankedScore, totalScore uint64
+			switch mode {
+			case "taiko":
+				pp, rankedScore, totalScore, playcount = u.PpTaiko, u.RankedScoreTaiko, u.TotalScoreTaiko, u.PlaycountTaiko
+			case "ctb":
+				pp, rankedScore, totalScore, playcount = u.PpCtb, u.RankedScoreCtb, u.TotalScoreCtb, u.PlaycountCtb
+			case "mania":
+				pp, rankedScore, totalScore, playcount = u.PpMania, u.RankedScoreMania, u.TotalScoreMania, u.PlaycountMania
+			default:
+				pp, rankedScore, totalScore, playcount = u.PpStd, u.RankedScoreStd, u.TotalScoreStd, u.PlaycountStd
+			}
+			d.PP += int(float64(pp) * math.Pow(0.95, float64(idx)))
+			d.RankedScore += rankedScore
+			d.TotalScore += totalScore
+			d.PlayCount += playcount
+		}
+		stats[clanID] = d
+	}
+	return stats, nil
+}
 
 func AllClanStatsGET(md common.MethodData) common.CodeMessager {
 	var (
@@ -163,87 +246,19 @@ func AllClanStatsGET(md common.MethodData) common.CodeMessager {
 
 	mode := common.Int(md.Query("m"))
 	rx := common.Int(md.Query("rx"))
+	n := modeName(mode)
 
-	n := "std"
-	if mode == 1 {
-		n = "taiko"
-	} else if mode == 2 {
-		n = "ctb"
-	} else if mode == 3 {
-		n = "mania"
-	} else {
-		n = "std"
+	clanIDs := make([]int, len(r.Clans))
+	for i, c := range r.Clans {
+		clanIDs[i] = c.ID
 	}
-
-	selectedQuery := VNClanQuery
-	if rx == 1 {
-		selectedQuery = RXClanQuery
-	} else if rx == 2 {
-		selectedQuery = APClanQuery
+	stats, err := loadClanStats(md, clanIDs, rx, n)
+	if err != nil {
+		md.Err(err)
+		return Err500
 	}
-
-	for i := 0; i < len(r.Clans); i++ {
-		var members clanMembersData
-
-		rid := r.Clans[i].ID
-
-		err := md.DB.Select(&members.Members, selectedQuery, rid)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		members.Code = 200
-
-		if n == "std" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpStd > members.Members[j].PpStd
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpStd)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreStd
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreStd
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountStd
-			}
-
-		} else if n == "taiko" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpTaiko > members.Members[j].PpTaiko
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpTaiko)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreTaiko
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreTaiko
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountTaiko
-			}
-
-		} else if n == "ctb" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpCtb > members.Members[j].PpCtb
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpCtb)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreCtb
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreCtb
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountCtb
-			}
-
-		} else if n == "mania" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpMania > members.Members[j].PpMania
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpMania)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreMania
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreMania
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountMania
-			}
-
-		}
+	for i := range r.Clans {
+		r.Clans[i].ChosenMode = stats[r.Clans[i].ID]
 	}
 
 	sort.Slice(r.Clans, func(i, j int) bool {
@@ -251,10 +266,18 @@ func AllClanStatsGET(md common.MethodData) common.CodeMessager {
 	})
 
 	for i := 0; i < len(r.Clans); i++ {
-		r.Clans[i].Rank = (p * l) + i + 1
+		r.Clans[i].Rank = i + 1
 	}
 
-	r.Clans = r.Clans[p*l : l]
+	start := p * l
+	if start > len(r.Clans) {
+		start = len(r.Clans)
+	}
+	end := start + l
+	if end > len(r.Clans) {
+		end = len(r.Clans)
+	}
+	r.Clans = r.Clans[start:end]
 	return r
 }
 
@@ -292,87 +315,19 @@ func TotalClanStatsGET(md common.MethodData) common.CodeMessager {
 
 	m := common.Int(md.Query("m"))
 	rx := common.Int(md.Query("rx"))
+	n := modeName(m)
 
-	n := "std"
-	if m == 1 {
-		n = "taiko"
-	} else if m == 2 {
-		n = "ctb"
-	} else if m == 3 {
-		n = "mania"
-	} else {
-		n = "std"
+	clanIDs := make([]int, len(r.Clans))
+	for i, c := range r.Clans {
+		clanIDs[i] = c.ID
 	}
-
-	selectedQuery := VNClanQuery
-	if rx == 1 {
-		selectedQuery = RXClanQuery
-	} else if rx == 2 {
-		selectedQuery = APClanQuery
+	stats, err := loadClanStats(md, clanIDs, rx, n)
+	if err != nil {
+		md.Err(err)
+		return Err500
 	}
-
-	for i := 0; i < len(r.Clans); i++ {
-		var members clanMembersData
-
-		rid := r.Clans[i].ID
-
-		err := md.DB.Select(&members.Members, selectedQuery, rid)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		members.Code = 200
-
-		if n == "std" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpStd > members.Members[j].PpStd
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpStd)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreStd
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreStd
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountStd
-			}
-
-		} else if n == "taiko" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpTaiko > members.Members[j].PpTaiko
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpTaiko)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreTaiko
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreTaiko
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountTaiko
-			}
-
-		} else if n == "ctb" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpCtb > members.Members[j].PpCtb
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpCtb)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreCtb
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreCtb
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountCtb
-			}
-
-		} else if n == "mania" {
-			sort.Slice(members.Members, func(i, j int) bool {
-				return members.Members[i].PpMania > members.Members[j].PpMania
-			})
-
-			for idx, u := range members.Members {
-				r.Clans[i].ChosenMode.PP = r.Clans[i].ChosenMode.PP + int(float64(u.PpMania)*math.Pow(0.95, float64(idx)))
-				r.Clans[i].ChosenMode.RankedScore = r.Clans[i].ChosenMode.RankedScore + u.RankedScoreMania
-				r.Clans[i].ChosenMode.TotalScore = r.Clans[i].ChosenMode.TotalScore + u.TotalScoreMania
-				r.Clans[i].ChosenMode.PlayCount = r.Clans[i].ChosenMode.PlayCount + u.PlaycountMania
-			}
-
-		}
+	for i := range r.Clans {
+		r.Clans[i].ChosenMode = stats[r.Clans[i].ID]
 	}
 
 	sort.Slice(r.Clans, func(i, j int) bool {
@@ -463,69 +418,48 @@ func ClanInviteGET(md common.MethodData) common.CodeMessager {
 	if adminFoolish.Perms < 8 || adminFoolish.Id != md.ID() {
 		return common.SimpleResponse(500, "You are not the admin of the clan")
 	}
-	row := md.DB.QueryRow("SELECT invite FROM clans_invites WHERE clan = ? LIMIT 1", clan).Scan(&r.Invite)
-	if row != nil {
-		fmt.Println(row)
+	if err := md.DB.QueryRow("SELECT invite FROM clans_invites WHERE clan = ? LIMIT 1", clan).Scan(&r.Invite); err != nil {
+		md.Err(err)
 	}
 	return r
 }
 
-// ClanMembersGET retrieves the people who are in a certain clan.
+const clanMembersSelectBase = `SELECT users.id, users.username, users.register_datetime, users.privileges,
+	latest_activity, users_stats.username_aka,
+
+	users.country, users_stats.user_color,
+	users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std, users_stats.total_hits_std,
+	users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko, users_stats.total_hits_taiko
+
+FROM user_clans uc
+INNER JOIN users
+ON users.id = uc.user
+INNER JOIN users_stats ON users_stats.id = uc.user
+WHERE clan = ?%s
+ORDER BY id ASC `
+
+// ClanMembersGET retrieves the people who are in a certain clan. If r
+// (perms) is given, only members with that permission level are returned.
 func ClanMembersGET(md common.MethodData) common.CodeMessager {
 	i := common.Int(md.Query("id"))
 	if i == 0 {
 		return ErrMissingField("id")
 	}
-	r := common.Int(md.Query("r"))
-	if r == 0 {
-		var members clanMembersData
 
-		err := md.DB.Select(&members.Members, `SELECT users.id, users.username, users.register_datetime, users.privileges,
-			latest_activity, users_stats.username_aka,
-			
-			users.country, users_stats.user_color,
-			users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std, users_stats.total_hits_std,
-			users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko, users_stats.total_hits_taiko
-			
-		FROM user_clans uc
-		INNER JOIN users
-		ON users.id = uc.user
-		INNER JOIN users_stats ON users_stats.id = uc.user
-		WHERE clan = ?
-		ORDER BY id ASC `, i)
-
-		if err != nil {
-			md.Err(err)
-			return Err500
-		}
-
-		members.Code = 200
-		return members
+	var members clanMembersData
+	var err error
+	if r := common.Int(md.Query("r")); r == 0 {
+		err = md.DB.Select(&members.Members, fmt.Sprintf(clanMembersSelectBase, ""), i)
 	} else {
-		var members clanMembersData
-
-		err := md.DB.Select(&members.Members, `SELECT users.id, users.username, users.register_datetime, users.privileges,
-			latest_activity, users_stats.username_aka,
-			
-			users.country, users_stats.user_color,
-			users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std,
-			users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko
-			
-		FROM user_clans uc
-		INNER JOIN users
-		ON users.id = uc.user
-		INNER JOIN users_stats ON users_stats.id = uc.user
-		WHERE clan = ? AND perms = ?
-		ORDER BY id ASC `, i, r)
-
-		if err != nil {
-			md.Err(err)
-			return Err500
-		}
-
-		members.Code = 200
-		return members
+		err = md.DB.Select(&members.Members, fmt.Sprintf(clanMembersSelectBase, " AND perms = ?"), i, r)
 	}
+	if err != nil {
+		md.Err(err)
+		return Err500
+	}
+
+	members.Code = 200
+	return members
 }
 
 // Zunhapan likes this.

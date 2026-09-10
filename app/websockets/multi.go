@@ -1,9 +1,11 @@
 package websockets
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
+
+	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 // SubscribeMultiMatches subscribes to receiving information from completed
@@ -30,14 +32,11 @@ var multiSubscriptions []*conn
 var multiSubscriptionsMtx = new(sync.RWMutex)
 
 func matchRetriever() {
-	ps, err := red.Subscribe("api:mp_complete_match")
-	if err != nil {
-		fmt.Println(err)
-	}
+	ps := red.Subscribe(context.Background(), "api:mp_complete_match")
 	for {
-		msg, err := ps.ReceiveMessage()
+		msg, err := ps.ReceiveMessage(context.Background())
 		if err != nil {
-			fmt.Println(err.Error())
+			common.GenericError(err)
 			return
 		}
 		go handleNewMultiGame(msg.Payload)

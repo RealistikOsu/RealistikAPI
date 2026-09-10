@@ -1,11 +1,12 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
 	"github.com/RealistikOsu/RealistikAPI/common"
-	redis "gopkg.in/redis.v5"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type hypotheticalRankResponse struct {
@@ -19,7 +20,7 @@ func HypotheticalRankGET(md common.MethodData) common.CodeMessager {
 		return common.SimpleResponse(400, "invalid mode")
 	}
 
-	mode := modesToReadable[modeInt]
+	mode := modeName(modeInt)
 
 	rx, err := strconv.Atoi(md.Query("rx"))
 	if err != nil || rx > 2 || rx < 0 {
@@ -66,7 +67,7 @@ func autopilotRankAtPerformancePoints(r *redis.Client, mode string, performanceP
 }
 
 func _rankAtPerformancePoints(r *redis.Client, key string, performancePoints int) (int, error) {
-	res := r.ZCount(key, fmt.Sprintf("(%d", performancePoints), "inf")
+	res := r.ZCount(context.Background(), key, fmt.Sprintf("(%d", performancePoints), "inf")
 	err := res.Err()
 	if err != nil {
 		return -1, err

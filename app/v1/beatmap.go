@@ -154,6 +154,7 @@ func getMultipleBeatmaps(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	var r beatmapSetResponse
 	for rows.Next() {
 		var b beatmap
@@ -198,6 +199,7 @@ func BeatmapSearchGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 
 	var r beatmapSetSearchResponse
 	var bm beatmapSetData
@@ -290,6 +292,7 @@ func BeatmapRankedFrozenFullGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	var r beatmapRankedFrozenFullResponse
 	for rows.Next() {
 		var b beatmapReduced

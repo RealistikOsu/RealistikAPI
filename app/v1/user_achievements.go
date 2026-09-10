@@ -2,7 +2,6 @@ package v1
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/RealistikOsu/RealistikAPI/common"
@@ -25,7 +24,6 @@ func LoadAchievementsEvery(db *sqlx.DB, d time.Duration) {
 		err := db.Select(&achievs,
 			"SELECT `id`, `name`, `desc`, `file` FROM `ussr_achievements` ORDER BY `id` ASC")
 		if err != nil {
-			fmt.Println("LoadAchievements error", err)
 			common.GenericError(err)
 		}
 		time.Sleep(d)

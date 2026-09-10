@@ -36,6 +36,7 @@ WHERE ` + whereClause + ` ORDER BY users_beatmap_playcount.playcount DESC ` +
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	var r mostPlayedBeatmapResponse
 	md.DB.Get(&r.Total, "SELECT COUNT(id) FROM users_beatmap_playcount WHERE user_id = ? AND game_mode = ?", md.Query("id"), md.Query("mode"))
 	for rows.Next() {

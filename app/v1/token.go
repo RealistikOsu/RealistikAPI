@@ -57,6 +57,7 @@ func TokenGET(md common.MethodData) common.CodeMessager {
 	if err != nil {
 		return Err500
 	}
+	defer rows.Close()
 	var r tokenResponse
 	for rows.Next() {
 		var t token
@@ -186,9 +187,10 @@ FROM tokens
 LEFT JOIN users ON users.id = tokens.user
 `+wc, params...)
 	if err != nil {
-		fmt.Println(err)
+		common.GenericError(err)
 		return
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var (
 			id            int
@@ -199,7 +201,7 @@ LEFT JOIN users ON users.id = tokens.user
 		)
 		err := rows.Scan(&id, &privsRaw, &privilegesRaw)
 		if err != nil {
-			fmt.Println(err)
+			common.GenericError(err)
 			continue
 		}
 		privileges := common.UserPrivileges(privilegesRaw)
@@ -208,7 +210,7 @@ LEFT JOIN users ON users.id = tokens.user
 		if newPrivs != privs {
 			_, err := db.Exec("UPDATE tokens SET privileges = ? WHERE id = ? LIMIT 1", uint64(newPrivs), id)
 			if err != nil {
-				fmt.Println(err)
+				common.GenericError(err)
 				continue
 			}
 		}

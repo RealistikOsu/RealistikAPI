@@ -22,6 +22,16 @@ func (w *WhereClause) Where(clause, passedParam string, allowedValues ...string)
 	return w
 }
 
+// WhereRaw adds a WHERE clause that has no associated bind parameter of its
+// own (any variables must already be embedded in the clause, or added via
+// their own In/Where call). Use this instead of Where when the clause is
+// fully self-contained and doesn't take a single "?" placeholder.
+func (w *WhereClause) WhereRaw(clause string) *WhereClause {
+	w.addWhere()
+	w.Clause += clause
+	return w
+}
+
 func (w *WhereClause) addWhere() {
 	// if string is empty add "WHERE", else add AND
 	if w.Clause == "" {

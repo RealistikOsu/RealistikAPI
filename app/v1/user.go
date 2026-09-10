@@ -114,6 +114,7 @@ func userPutsMulti(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 	var r userPutsMultiUserData
 	for rows.Next() {
 		var u userData
@@ -165,13 +166,6 @@ func UserWhatsTheIDGET(md common.MethodData) common.CodeMessager {
 	}
 	r.Code = 200
 	return r
-}
-
-var modesToReadable = [...]string{
-	"std",
-	"taiko",
-	"ctb",
-	"mania",
 }
 
 type modeData struct {
@@ -408,10 +402,10 @@ LIMIT 1
 	for modeID, m := range [...]*modeData{&r.Stats.Vanilla.STD, &r.Stats.Vanilla.Taiko, &r.Stats.Vanilla.CTB, &r.Stats.Vanilla.Mania} {
 		m.Level = ocl.GetLevelPrecise(int64(m.TotalScore))
 
-		if i := leaderboardPosition(md.R, modesToReadable[modeID], r.ID); i != nil {
+		if i := leaderboardPosition(md.R, modeName(modeID), r.ID); i != nil {
 			m.GlobalLeaderboardRank = i
 		}
-		if i := countryPosition(md.R, modesToReadable[modeID], r.ID, r.Country); i != nil {
+		if i := countryPosition(md.R, modeName(modeID), r.ID, r.Country); i != nil {
 			m.CountryLeaderboardRank = i
 		}
 	}
@@ -419,10 +413,10 @@ LIMIT 1
 	for modeID, m := range [...]*modeData{&r.Stats.Relax.STD, &r.Stats.Relax.Taiko, &r.Stats.Relax.CTB, &r.Stats.Relax.Mania} {
 		m.Level = ocl.GetLevelPrecise(int64(m.TotalScore))
 
-		if i := relaxboardPosition(md.R, modesToReadable[modeID], r.ID); i != nil {
+		if i := relaxboardPosition(md.R, modeName(modeID), r.ID); i != nil {
 			m.GlobalLeaderboardRank = i
 		}
-		if i := rxcountryPosition(md.R, modesToReadable[modeID], r.ID, r.Country); i != nil {
+		if i := rxcountryPosition(md.R, modeName(modeID), r.ID, r.Country); i != nil {
 			m.CountryLeaderboardRank = i
 		}
 	}
@@ -430,28 +424,27 @@ LIMIT 1
 	for modeID, m := range [...]*modeData{&r.Stats.Autopilot.STD, &r.Stats.Autopilot.Taiko, &r.Stats.Autopilot.CTB, &r.Stats.Autopilot.Mania} {
 		m.Level = ocl.GetLevelPrecise(int64(m.TotalScore))
 
-		if i := autoPosition(md.R, modesToReadable[modeID], r.ID); i != nil {
+		if i := autoPosition(md.R, modeName(modeID), r.ID); i != nil {
 			m.GlobalLeaderboardRank = i
 		}
-		if i := apcountryPosition(md.R, modesToReadable[modeID], r.ID, r.Country); i != nil {
+		if i := apcountryPosition(md.R, modeName(modeID), r.ID, r.Country); i != nil {
 			m.CountryLeaderboardRank = i
 		}
 	}
 
-	rows, err := md.DB.Query("SELECT b.id, b.name, b.icon FROM user_badges ub "+
-		"LEFT JOIN badges b ON ub.badge = b.id WHERE user = ?", r.ID)
-	if err != nil {
+	if rows, err := md.DB.Query("SELECT b.id, b.name, b.icon FROM user_badges ub "+
+		"LEFT JOIN badges b ON ub.badge = b.id WHERE user = ?", r.ID); err != nil {
 		md.Err(err)
-	}
-
-	for rows.Next() {
-		var badge singleBadge
-		err := rows.Scan(&badge.ID, &badge.Name, &badge.Icon)
-		if err != nil {
-			md.Err(err)
-			continue
+	} else {
+		for rows.Next() {
+			var badge singleBadge
+			if err := rows.Scan(&badge.ID, &badge.Name, &badge.Icon); err != nil {
+				md.Err(err)
+				continue
+			}
+			r.Badges = append(r.Badges, badge)
 		}
-		r.Badges = append(r.Badges, badge)
+		rows.Close()
 	}
 
 	if md.User.TokenPrivileges&common.PrivilegeManageUser == 0 {
@@ -460,40 +453,38 @@ LIMIT 1
 		r.Email = ""
 	}
 
-	rows, err = md.DB.Query("SELECT c.id, c.name, c.description, c.tag, c.icon FROM user_clans uc "+
-		"LEFT JOIN clans c ON uc.clan = c.id WHERE user = ?", r.ID)
-	if err != nil {
+	if rows, err := md.DB.Query("SELECT c.id, c.name, c.description, c.tag, c.icon FROM user_clans uc "+
+		"LEFT JOIN clans c ON uc.clan = c.id WHERE user = ?", r.ID); err != nil {
 		md.Err(err)
-	}
-
-	for rows.Next() {
-		var clan singleClan
-		err = rows.Scan(&clan.ID, &clan.Name, &clan.Description, &clan.Tag, &clan.Icon)
-		if err != nil {
-			md.Err(err)
-			continue
+	} else {
+		for rows.Next() {
+			var clan singleClan
+			if err := rows.Scan(&clan.ID, &clan.Name, &clan.Description, &clan.Tag, &clan.Icon); err != nil {
+				md.Err(err)
+				continue
+			}
+			r.Clan = clan
 		}
-		r.Clan = clan
+		rows.Close()
 	}
 
-	rows, err = md.DB.Query("SELECT username FROM user_name_history WHERE user_id = ?", r.ID)
-	if err != nil {
+	if rows, err := md.DB.Query("SELECT username FROM user_name_history WHERE user_id = ?", r.ID); err != nil {
 		md.Err(err)
-	}
+	} else {
+		for rows.Next() {
+			var pastName string
+			if err := rows.Scan(&pastName); err != nil {
+				md.Err(err)
+				continue
+			}
 
-	for rows.Next() {
-		var pastName string
-		err := rows.Scan(&pastName)
-		if err != nil {
-			md.Err(err)
-			continue
+			if pastName == r.Username { // don't show current username in past names
+				continue
+			}
+
+			r.PastUsernames = append(r.PastUsernames, pastName)
 		}
-
-		if pastName == r.Username { // don't show current username in past names
-			continue
-		}
-
-		r.PastUsernames = append(r.PastUsernames, pastName)
+		rows.Close()
 	}
 
 	r.Code = 200
@@ -599,6 +590,7 @@ func UserLookupGET(md common.MethodData) common.CodeMessager {
 		md.Err(err)
 		return Err500
 	}
+	defer rows.Close()
 
 	var r userLookupResponse
 	for rows.Next() {
