@@ -92,7 +92,7 @@ func handleNewScore(id string) {
 SELECT
 	s.id, s.beatmap_md5, s.score, s.max_combo, s.full_combo, s.mods,
 	s.300_count, s.100_count, s.50_count, s.gekis_count, s.katus_count, s.misses_count,
-	s.time, s.play_mode, s.accuracy, s.pp, s.completed, s.userid AS user_id,
+	s.time, s.play_mode, s.accuracy, s.pp, s.completed, s.playback_rate, s.userid AS user_id,
 	u.username, u.privileges
 FROM scores s
 INNER JOIN users u ON s.userid = u.id

@@ -14,24 +14,25 @@ import (
 
 // Score is a score done on Ripple.
 type Score struct {
-	ID         int                  `json:"id"`
-	BeatmapMD5 string               `json:"beatmap_md5"`
-	Score      int64                `json:"score"`
-	MaxCombo   int                  `json:"max_combo"`
-	FullCombo  bool                 `json:"full_combo"`
-	Mods       int                  `json:"mods"`
-	Count300   int                  `json:"count_300"`
-	Count100   int                  `json:"count_100"`
-	Count50    int                  `json:"count_50"`
-	CountGeki  int                  `json:"count_geki"`
-	CountKatu  int                  `json:"count_katu"`
-	CountMiss  int                  `json:"count_miss"`
-	Time       common.UnixTimestamp `json:"time"`
-	PlayMode   int                  `json:"play_mode"`
-	Accuracy   float64              `json:"accuracy"`
-	PP         float32              `json:"pp"`
-	Rank       string               `json:"rank"`
-	Completed  int                  `json:"completed"`
+	ID           int                  `json:"id"`
+	BeatmapMD5   string               `json:"beatmap_md5"`
+	Score        int64                `json:"score"`
+	MaxCombo     int                  `json:"max_combo"`
+	FullCombo    bool                 `json:"full_combo"`
+	Mods         int                  `json:"mods"`
+	Count300     int                  `json:"count_300"`
+	Count100     int                  `json:"count_100"`
+	Count50      int                  `json:"count_50"`
+	CountGeki    int                  `json:"count_geki"`
+	CountKatu    int                  `json:"count_katu"`
+	CountMiss    int                  `json:"count_miss"`
+	Time         common.UnixTimestamp `json:"time"`
+	PlayMode     int                  `json:"play_mode"`
+	Accuracy     float64              `json:"accuracy"`
+	PP           float32              `json:"pp"`
+	Rank         string               `json:"rank"`
+	Completed    int                  `json:"completed"`
+	PlaybackRate float32              `json:"playback_rate"`
 }
 
 // beatmapScore is to differentiate from userScore, as beatmapScore contains
@@ -53,7 +54,7 @@ SELECT
 	scores%[1]s.300_count, scores%[1]s.100_count, scores%[1]s.50_count,
 	scores%[1]s.gekis_count, scores%[1]s.katus_count, scores%[1]s.misses_count,
 	scores%[1]s.time, scores%[1]s.play_mode, scores%[1]s.accuracy, scores%[1]s.pp,
-	scores%[1]s.completed,
+	scores%[1]s.completed, scores%[1]s.playback_rate,
 
 	users.id, users.username, users.register_datetime, users.privileges,
 	users.latest_activity, users_stats.username_aka, users.country
@@ -120,7 +121,7 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 			&s.Count300, &s.Count100, &s.Count50,
 			&s.CountGeki, &s.CountKatu, &s.CountMiss,
 			&s.Time, &s.PlayMode, &s.Accuracy, &s.PP,
-			&s.Completed,
+			&s.Completed, &s.PlaybackRate,
 
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges,
 			&u.LatestActivity, &u.UsernameAKA, &u.Country,

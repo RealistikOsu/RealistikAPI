@@ -27,7 +27,7 @@ const userScoreSelectBase = `
 			scores%[1]s.300_count, scores%[1]s.100_count, scores%[1]s.50_count,
 			scores%[1]s.gekis_count, scores%[1]s.katus_count, scores%[1]s.misses_count,
 			scores%[1]s.time, scores%[1]s.play_mode, scores%[1]s.accuracy, scores%[1]s.pp,
-			scores%[1]s.completed,
+			scores%[1]s.completed, scores%[1]s.playback_rate,
 
 			beatmaps.beatmap_id, beatmaps.beatmapset_id, beatmaps.beatmap_md5,
 			beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std,
@@ -109,7 +109,7 @@ func userScoresPuts(md common.MethodData, rx int, whereClause string, params ...
 			&us.Count300, &us.Count100, &us.Count50,
 			&us.CountGeki, &us.CountKatu, &us.CountMiss,
 			&us.Time, &us.PlayMode, &us.Accuracy, &us.PP,
-			&us.Completed,
+			&us.Completed, &us.PlaybackRate,
 
 			&b.BeatmapID, &b.BeatmapsetID, &b.BeatmapMD5,
 			&b.SongName, &b.AR, &b.OD, &b.Diff2.STD,
