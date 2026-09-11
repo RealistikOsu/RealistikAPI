@@ -8,9 +8,24 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/valyala/fasthttp"
 	"github.com/RealistikOsu/RealistikAPI/common"
+	"gopkg.in/thehowl/go-osuapi.v1"
 )
 
 var modes = []string{"std", "taiko", "ctb", "mania"}
+
+// gsScore and gusScore add playback_rate to the osu! API v1 score types,
+// which have no field for it (the official spec predates the feature).
+// osuapi.GSScore/GUSScore are external types we don't own, so we can't add
+// the field directly to them.
+type gsScore struct {
+	osuapi.GSScore
+	PlaybackRate float32 `json:"playback_rate,string"`
+}
+
+type gusScore struct {
+	osuapi.GUSScore
+	PlaybackRate float32 `json:"playback_rate,string"`
+}
 
 var defaultResponse = []struct{}{}
 

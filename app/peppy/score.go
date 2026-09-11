@@ -67,7 +67,7 @@ SELECT
 	s.id, s.score, users.username, s.300_count, s.100_count,
 	s.50_count, s.misses_count, s.gekis_count, s.katus_count,
 	s.max_combo, s.full_combo, s.mods, users.id, s.time, s.pp,
-	s.accuracy
+	s.accuracy, s.playback_rate
 FROM %s s
 INNER JOIN users ON users.id = s.userid
 WHERE s.completed >= ?
@@ -84,10 +84,10 @@ ORDER BY `+sb+` DESC LIMIT `+strconv.Itoa(common.InString(1, query(c, "limit"), 
 		return
 	}
 	defer rows.Close()
-	var results []osuapi.GSScore
+	var results []gsScore
 	for rows.Next() {
 		var (
-			s         osuapi.GSScore
+			s         gsScore
 			fullcombo bool
 			mods      int
 			date      common.UnixTimestamp
@@ -97,7 +97,7 @@ ORDER BY `+sb+` DESC LIMIT `+strconv.Itoa(common.InString(1, query(c, "limit"), 
 			&s.ScoreID, &s.Score.Score, &s.Username, &s.Count300, &s.Count100,
 			&s.Count50, &s.CountMiss, &s.CountGeki, &s.CountKatu,
 			&s.MaxCombo, &fullcombo, &mods, &s.UserID, &date, &s.PP,
-			&accuracy,
+			&accuracy, &s.PlaybackRate,
 		)
 		if err != nil {
 			if err != sql.ErrNoRows {

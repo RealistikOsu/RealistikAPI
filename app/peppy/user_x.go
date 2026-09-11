@@ -35,7 +35,7 @@ func getUserX(c *fasthttp.RequestCtx, db *sqlx.DB, orderBy string, limit int) {
 			scores.300_count, scores.100_count, scores.50_count,
 			scores.gekis_count, scores.katus_count, scores.misses_count,
 			scores.full_combo, scores.mods, users.id, scores.time,
-			scores.pp, scores.accuracy
+			scores.pp, scores.accuracy, scores.playback_rate
 		FROM scores
 		LEFT JOIN beatmaps ON beatmaps.beatmap_md5 = scores.beatmap_md5
 		LEFT JOIN users ON scores.userid = users.id
@@ -43,7 +43,7 @@ func getUserX(c *fasthttp.RequestCtx, db *sqlx.DB, orderBy string, limit int) {
 		%s
 		LIMIT %d`, whereClause, orderBy, limit,
 	)
-	scores := make([]osuapi.GUSScore, 0, limit)
+	scores := make([]gusScore, 0, limit)
 	m := genmodei(query(c, "m"))
 	rows, err := db.Query(sqlQuery, p, m)
 	if err != nil {
@@ -54,7 +54,7 @@ func getUserX(c *fasthttp.RequestCtx, db *sqlx.DB, orderBy string, limit int) {
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			curscore osuapi.GUSScore
+			curscore gusScore
 			rawTime  common.UnixTimestamp
 			acc      float64
 			fc       bool
@@ -66,7 +66,7 @@ func getUserX(c *fasthttp.RequestCtx, db *sqlx.DB, orderBy string, limit int) {
 			&curscore.Count300, &curscore.Count100, &curscore.Count50,
 			&curscore.CountGeki, &curscore.CountKatu, &curscore.CountMiss,
 			&fc, &mods, &curscore.UserID, &rawTime,
-			&curscore.PP, &acc,
+			&curscore.PP, &acc, &curscore.PlaybackRate,
 		)
 		if err != nil {
 			json(c, 200, defaultResponse)
