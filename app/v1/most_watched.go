@@ -11,9 +11,8 @@ import (
 
 type mostWatchedScore struct {
 	Score
-	WatchedCount int      `json:"watched_count"`
-	Beatmap      beatmap  `json:"beatmap"`
-	User         userData `json:"user"`
+	WatchedCount int     `json:"watched_count"`
+	Beatmap      beatmap `json:"beatmap"`
 }
 
 type mostWatchedScoresResponse struct {
@@ -34,34 +33,38 @@ const mostWatchedSelectBase = `
 			beatmaps.song_name, beatmaps.ar, beatmaps.od, beatmaps.difficulty_std,
 			beatmaps.difficulty_taiko, beatmaps.difficulty_ctb, beatmaps.difficulty_mania,
 			beatmaps.max_combo, beatmaps.hit_length, beatmaps.ranked,
-			beatmaps.ranked_status_freezed, beatmaps.latest_update,
-
-			users.id, users.username, users.register_datetime, users.privileges,
-			users.latest_activity, users_stats.username_aka, users.country, users.coins
+			beatmaps.ranked_status_freezed, beatmaps.latest_update
 		FROM scores%[1]s
 		INNER JOIN beatmaps ON beatmaps.beatmap_md5 = scores%[1]s.beatmap_md5
 		INNER JOIN users ON users.id = scores%[1]s.userid
-		INNER JOIN users_stats ON users_stats.id = scores%[1]s.userid
 		`
 
-// MostWatchedScoresGET retrieves the scores whose replays have been watched
-// the most, for a single rx variant (rx query param, same 0/1/2 convention
-// as the leaderboard/user-scores endpoints - there's no cross-table UNION
-// here, so vanilla/relax/autopilot are ranked separately).
+// MostWatchedScoresGET retrieves a single user's scores whose replays have
+// been watched the most - a profile card, same shape as
+// UserScoresBestGET/UserScoresRecentGET (id/name-scoped via
+// whereClauseUser, mode-scoped via genModeClause, rx picks the table).
 func MostWatchedScoresGET(md common.MethodData) common.CodeMessager {
+	cm, wc, param := whereClauseUser(md, "users")
+	if cm != nil {
+		return *cm
+	}
+
 	rx := common.Int(md.Query("rx"))
 	table := "scores" + rxTableSuffix(rx)
+	mc := genModeClause(md)
 
 	rows, err := md.DB.Query(fmt.Sprintf(
 		mostWatchedSelectBase+`
 		WHERE %s.completed = 3
 			AND beatmaps.ranked IN (2,3)
 			AND %s.watched_count > 0
+			AND %s
+			%s
 			AND `+md.User.OnlyUserPublic(true)+`
 		ORDER BY %s.watched_count DESC, %s.pp DESC %s`,
-		rxTableSuffix(rx), table, table, table, table,
+		rxTableSuffix(rx), table, table, wc, mc, table, table,
 		common.Paginate(md.Query("p"), md.Query("l"), 100),
-	))
+	), param)
 	if err != nil {
 		md.Err(err)
 		return Err500
@@ -73,7 +76,6 @@ func MostWatchedScoresGET(md common.MethodData) common.CodeMessager {
 		var (
 			ms mostWatchedScore
 			b  beatmap
-			u  userData
 		)
 		err = rows.Scan(
 			&ms.ID, &ms.BeatmapMD5, &ms.Score.Score,
@@ -88,9 +90,6 @@ func MostWatchedScoresGET(md common.MethodData) common.CodeMessager {
 			&b.Diff2.Taiko, &b.Diff2.CTB, &b.Diff2.Mania,
 			&b.MaxCombo, &b.HitLength, &b.Ranked,
 			&b.RankedStatusFrozen, &b.LatestUpdate,
-
-			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges,
-			&u.LatestActivity, &u.UsernameAKA, &u.Country, &u.Coins,
 		)
 		if err != nil {
 			md.Err(err)
@@ -98,7 +97,6 @@ func MostWatchedScoresGET(md common.MethodData) common.CodeMessager {
 		}
 		b.Difficulty = b.Diff2.STD
 		ms.Beatmap = b
-		ms.User = u
 		ms.Rank = strings.ToUpper(getrank.GetRank(
 			osuapi.Mode(ms.PlayMode),
 			osuapi.Mods(ms.Mods),
