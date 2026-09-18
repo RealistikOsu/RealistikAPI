@@ -31,7 +31,7 @@ const rxUserQuery = `
 		SELECT
 			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
-			users_stats.username_aka, users.country,
+			users_stats.username_aka, users.country, COALESCE(users.name_decoration, ''),
 			users_stats.play_style, users_stats.favourite_mode,
 
 			rx_stats.ranked_score_%[1]s, rx_stats.total_score_%[1]s, rx_stats.playcount_%[1]s,
@@ -45,7 +45,7 @@ const apUserQuery = `
 		SELECT
 			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
-			users_stats.username_aka, users.country,
+			users_stats.username_aka, users.country, COALESCE(users.name_decoration, ''),
 			users_stats.play_style, users_stats.favourite_mode,
 
 			ap_stats.ranked_score_%[1]s, ap_stats.total_score_%[1]s, ap_stats.playcount_%[1]s,
@@ -59,7 +59,7 @@ const lbUserQuery = `
 		SELECT
 			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
-			users_stats.username_aka, users.country,
+			users_stats.username_aka, users.country, COALESCE(users.name_decoration, ''),
 			users_stats.play_style, users_stats.favourite_mode,
 
 			users_stats.ranked_score_%[1]s, users_stats.total_score_%[1]s, users_stats.playcount_%[1]s,
@@ -72,7 +72,7 @@ const lbCoinsUserQuery = `
 		SELECT
 			users.id, users.username, users.register_datetime, users.privileges, users.latest_activity, users.coins,
 
-			users_stats.username_aka, users.country,
+			users_stats.username_aka, users.country, COALESCE(users.name_decoration, ''),
 			users_stats.play_style, users_stats.favourite_mode
 
 		FROM users
@@ -120,7 +120,7 @@ func getScoreLb(m string, rx int, p int, l int, country string, sorted string, m
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
-			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
+			&u.UsernameAKA, &u.Country, &u.NameDecoration, &u.PlayStyle, &u.FavouriteMode,
 
 			&u.ChosenMode.RankedScore, &u.ChosenMode.TotalScore, &u.ChosenMode.PlayCount,
 			&u.ChosenMode.ReplaysWatched, &u.ChosenMode.TotalHits,
@@ -163,7 +163,7 @@ func getCoinLb(p int, l int, country string, sorted string, md *common.MethodDat
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
-			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
+			&u.UsernameAKA, &u.Country, &u.NameDecoration, &u.PlayStyle, &u.FavouriteMode,
 		)
 		if err != nil {
 			md.Err(err)
@@ -249,7 +249,7 @@ func LeaderboardGET(md common.MethodData) common.CodeMessager {
 		err := rows.Scan(
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges, &u.LatestActivity, &u.Coins,
 
-			&u.UsernameAKA, &u.Country, &u.PlayStyle, &u.FavouriteMode,
+			&u.UsernameAKA, &u.Country, &u.NameDecoration, &u.PlayStyle, &u.FavouriteMode,
 
 			&u.ChosenMode.RankedScore, &u.ChosenMode.TotalScore, &u.ChosenMode.PlayCount,
 			&u.ChosenMode.ReplaysWatched, &u.ChosenMode.TotalHits,

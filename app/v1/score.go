@@ -57,7 +57,7 @@ SELECT
 	scores%[1]s.completed, scores%[1]s.playback_rate,
 
 	users.id, users.username, users.register_datetime, users.privileges,
-	users.latest_activity, users_stats.username_aka, users.country
+	users.latest_activity, users_stats.username_aka, users.country, COALESCE(users.name_decoration, '')
 FROM scores%[1]s
 INNER JOIN users ON users.id = scores%[1]s.userid
 INNER JOIN users_stats ON users_stats.id = scores%[1]s.userid
@@ -124,7 +124,7 @@ func ScoresGET(md common.MethodData) common.CodeMessager {
 			&s.Completed, &s.PlaybackRate,
 
 			&u.ID, &u.Username, &u.RegisteredOn, &u.Privileges,
-			&u.LatestActivity, &u.UsernameAKA, &u.Country,
+			&u.LatestActivity, &u.UsernameAKA, &u.Country, &u.NameDecoration,
 		)
 		if err != nil {
 			md.Err(err)

@@ -21,6 +21,7 @@ type userData struct {
 	LatestActivity common.UnixTimestamp `json:"latest_activity"`
 	Country        string               `json:"country"`
 	Coins          int                  `json:"coins"`
+	NameDecoration string               `json:"name_decoration"`
 }
 
 const userFields = `SELECT users.id, users.username, register_datetime, users.privileges,
@@ -559,8 +560,9 @@ type userLookupResponse struct {
 	Users []lookupUser `json:"users"`
 }
 type lookupUser struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
+	ID             int    `json:"id"`
+	Username       string `json:"username"`
+	NameDecoration string `json:"name_decoration"`
 }
 
 // UserLookupGET does a quick lookup of users beginning with the passed
@@ -583,7 +585,7 @@ func UserLookupGET(md common.MethodData) common.CodeMessager {
 		email = md.Query("name")
 	}
 
-	rows, err := md.DB.Query("SELECT users.id, users.username FROM users WHERE "+
+	rows, err := md.DB.Query("SELECT users.id, users.username, COALESCE(users.name_decoration, '') FROM users WHERE "+
 		"(username_safe LIKE ? OR email = ?) AND "+
 		md.User.OnlyUserPublic(true)+" LIMIT 25", name, email)
 	if err != nil {
@@ -595,7 +597,7 @@ func UserLookupGET(md common.MethodData) common.CodeMessager {
 	var r userLookupResponse
 	for rows.Next() {
 		var l lookupUser
-		err := rows.Scan(&l.ID, &l.Username)
+		err := rows.Scan(&l.ID, &l.Username, &l.NameDecoration)
 		if err != nil {
 			continue // can't be bothered to handle properly
 		}

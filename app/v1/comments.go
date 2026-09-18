@@ -15,11 +15,12 @@ const (
 )
 
 type comment struct {
-	ID       int    `json:"id"`
-	Op       int    `json:"op"`
-	Username string `json:"username"`
-	Message  string `json:"message"`
-	PostedAt int64  `json:"posted_at"`
+	ID             int    `json:"id"`
+	Op             int    `json:"op"`
+	Username       string `json:"username"`
+	NameDecoration string `json:"name_decoration"`
+	Message        string `json:"message"`
+	PostedAt       int64  `json:"posted_at"`
 }
 
 type comments struct {
@@ -107,7 +108,7 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 		SELECT
 			user_comments.op, user_comments.msg,
 			user_comments.comment_date,
-			users.username, user_comments.id
+			users.username, COALESCE(users.name_decoration, ''), user_comments.id
 		FROM user_comments
 		JOIN users ON users.id = user_comments.op
 		WHERE user_comments.prof = ? AND users.privileges & 1 = 1
@@ -127,7 +128,7 @@ func CommentGET(md common.MethodData) common.CodeMessager {
 		err = rows.Scan(
 			&cmt.Op,
 			&cmt.Message, &cmt.PostedAt,
-			&cmt.Username, &cmt.ID,
+			&cmt.Username, &cmt.NameDecoration, &cmt.ID,
 		)
 
 		if err != nil {
