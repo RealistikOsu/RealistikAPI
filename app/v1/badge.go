@@ -65,7 +65,7 @@ func BadgeMembersGET(md common.MethodData) common.CodeMessager {
 
 	err := md.DB.Select(&members.Members, `SELECT users.id, users.username, register_datetime, users.privileges,
 	latest_activity, users_stats.username_aka,
-	users.country
+	users.country, COALESCE(users.name_decoration, '') AS name_decoration
 FROM user_badges ub
 INNER JOIN users ON users.id = ub.user
 INNER JOIN users_stats ON users_stats.id = ub.user

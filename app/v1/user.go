@@ -223,6 +223,7 @@ type userNotFullResponse struct {
 	Privileges          uint64               `json:"privileges"`
 	LatestActivity      common.UnixTimestamp `json:"latest_activity"`
 	Country             string               `json:"country"`
+	NameDecoration      string               `json:"name_decoration"`
 	UserColor           string               `json:"user_color"`
 	RankedScoreStd      uint64               `json:"ranked_score_std"`
 	TotalScoreStd       uint64               `json:"total_score_std"`

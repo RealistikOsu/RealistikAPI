@@ -427,7 +427,7 @@ func ClanInviteGET(md common.MethodData) common.CodeMessager {
 const clanMembersSelectBase = `SELECT users.id, users.username, users.register_datetime, users.privileges,
 	latest_activity, users_stats.username_aka,
 
-	users.country, users_stats.user_color,
+	users.country, COALESCE(users.name_decoration, '') AS name_decoration, users_stats.user_color,
 	users_stats.ranked_score_std, users_stats.total_score_std, users_stats.pp_std, users_stats.playcount_std, users_stats.replays_watched_std, users_stats.total_hits_std,
 	users_stats.ranked_score_taiko, users_stats.total_score_taiko, users_stats.pp_taiko, users_stats.playcount_taiko, users_stats.replays_watched_taiko, users_stats.total_hits_taiko
 
