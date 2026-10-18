@@ -47,7 +47,7 @@ type ScoresResponse struct {
 }
 
 const topPlaysQuery = `
-SELECT
+SELECT /*+ JOIN_ORDER(scores, beatmaps, users) INDEX(scores scores_mode_top) */
 	scores.id, scores.beatmap_md5, scores.score,
 	scores.max_combo, scores.full_combo, scores.mods,
 	scores.300_count, scores.100_count, scores.50_count,
