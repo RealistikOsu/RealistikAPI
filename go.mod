@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/DataDog/datadog-go v0.0.0-20161213181837-6ea09a754064
 	github.com/buaazp/fasthttprouter v0.1.1
-	github.com/go-sql-driver/mysql v1.3.1-0.20161224121019-2e00b5cd7039
+	github.com/go-sql-driver/mysql v1.10.1
 	github.com/jmoiron/sqlx v0.0.0-20161209024531-cac998c4f095
 	github.com/joho/godotenv v1.5.1
 	github.com/leavengood/websocket v0.0.0-20170104145153-470559ebf58e
@@ -20,6 +20,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
