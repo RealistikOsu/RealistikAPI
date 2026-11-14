@@ -3,7 +3,6 @@ module github.com/RealistikOsu/RealistikAPI
 go 1.25.0
 
 require (
-	github.com/DataDog/datadog-go v0.0.0-20161213181837-6ea09a754064
 	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/jmoiron/sqlx v0.0.0-20161209024531-cac998c4f095

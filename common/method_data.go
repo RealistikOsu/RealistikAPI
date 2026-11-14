@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataDog/datadog-go/statsd"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
 	"github.com/valyala/fasthttp"
@@ -15,7 +14,7 @@ import (
 type MethodData struct {
 	User  Token
 	DB    *sqlx.DB
-	Doggo *statsd.Client
+	Doggo *Statsd
 	R     *redis.Client
 	Ctx   *fasthttp.RequestCtx
 }

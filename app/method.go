@@ -66,7 +66,7 @@ func initialCaretaker(c *fasthttp.RequestCtx, f func(md common.MethodData) commo
 		doggoTags = append(doggoTags, "hanayo")
 	}
 
-	doggo.Incr("requests.v1", doggoTags, 1)
+	doggo.Incr("requests.v1", doggoTags)
 
 	missingPrivileges := 0
 	for _, privilege := range privilegesNeeded {

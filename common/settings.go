@@ -40,6 +40,10 @@ type Settings struct {
 	REDIS_PORT int
 	REDIS_PASS string
 	REDIS_DB   int
+
+	// DogStatsD agent. An empty host turns metrics off.
+	STATSD_HOST string
+	STATSD_PORT int
 }
 
 var settings = Settings{}
@@ -66,6 +70,12 @@ func LoadSettings() Settings {
 	settings.REDIS_PORT = strToInt(getEnv("REDIS_PORT"))
 	settings.REDIS_PASS = getEnv("REDIS_PASS")
 	settings.REDIS_DB = strToInt(getEnv("REDIS_DB"))
+
+	settings.STATSD_HOST = os.Getenv("STATSD_HOST")
+	settings.STATSD_PORT = 8125
+	if port := os.Getenv("STATSD_PORT"); port != "" {
+		settings.STATSD_PORT = strToInt(port)
+	}
 
 	return settings
 }

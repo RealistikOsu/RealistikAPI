@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-go/statsd"
 	"github.com/RealistikOsu/RealistikAPI/app/internals"
 	"github.com/RealistikOsu/RealistikAPI/app/peppy"
 	v1 "github.com/RealistikOsu/RealistikAPI/app/v1"
@@ -21,7 +20,7 @@ import (
 
 var (
 	db    *sqlx.DB
-	doggo *statsd.Client
+	doggo *common.Statsd
 	red   *redis.Client
 )
 
@@ -33,6 +32,8 @@ func Start(dbO *sqlx.DB) *fhr.Router {
 	r := router{rawRouter}
 
 	settings := common.GetSettings()
+
+	doggo = common.NewStatsd(settings.STATSD_HOST, settings.STATSD_PORT)
 
 	// redis
 	red = redis.NewClient(&redis.Options{

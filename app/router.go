@@ -69,7 +69,7 @@ func wrap(handle fasthttp.RequestHandler) fasthttp.RequestHandler {
 			return
 		}
 
-		doggo.Incr("requests", nil, 1)
+		doggo.Incr("requests", nil)
 
 		defer func() {
 			if rval := recover(); rval != nil {
@@ -90,6 +90,7 @@ func wrap(handle fasthttp.RequestHandler) fasthttp.RequestHandler {
 			// switch color to colorError if statusCode is in [500;600)
 			color := colorOk
 			statusCode := c.Response.StatusCode()
+			doggo.Timing("request.time", time.Since(start), []string{fmt.Sprintf("status:%dxx", statusCode/100)})
 			if statusCode >= 500 && statusCode < 600 {
 				color = colorError
 			}

@@ -8,7 +8,7 @@ import (
 // PeppyMethod generates a method for the peppyapi
 func PeppyMethod(a func(c *fasthttp.RequestCtx, db *sqlx.DB)) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx) {
-		doggo.Incr("requests.peppy", nil, 1)
+		doggo.Incr("requests.peppy", nil)
 
 		c.Response.Header.SetContentType("application/json; charset=utf-8")
 
